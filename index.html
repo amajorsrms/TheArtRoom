@@ -2,1832 +2,209 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Texture Map Cup</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Art Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  overflow: hidden;
-  background: #000;
-  font-family: Arial, sans-serif;
-}
-canvas { display: block; }
+  :root{
+    --paper: #E4E7EA;
+    --paper-line: #C7CCD1;
+    --ink: #1C2226;
+    --pencil: #545C63;
+    --orange: #E0632A;
+    --orange-dim: #C2531F;
+    --cyan: #1B8FA6;
+    --cyan-dim: #14707F;
+    --shadow: rgba(28,34,38,0.22);
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; min-height:100vh;
+    background: var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 34px, var(--paper-line) 35px);
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .wrap{
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 36px 24px 80px;
+  }
+  a{ color: inherit; }
+  :focus-visible{ outline: 3px solid var(--orange); outline-offset: 2px; }
 
-/* ── UI PANEL ─────────────────────────────────────────── */
-#uiPanel {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 10;
-  background: rgba(255,255,255,0.92);
-  padding: 14px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 250px;
-}
-#uiPanel label {
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-  gap: 4px;
-}
-#info {
-  font-size: 13px;
-  color: #333;
-  margin-top: 2px;
-  line-height: 1.6;
-}
+  header{
+    text-align:center;
+    margin-bottom: 30px;
+    border-bottom: 3px solid var(--ink);
+    padding-bottom: 20px;
+  }
+  h1{
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(2.4rem, 7vw, 3.6rem);
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    margin: 0 0 6px;
+  }
+  .sub{
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--pencil);
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin: 0;
+  }
 
-/* Three color pickers side by side */
-#colorControls {
-  display: flex;
-  gap: 6px;
-  align-items: flex-end;
-}
-#colorControls label {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 11px;
-  color: #444;
-  gap: 4px;
-  line-height: 1.3;
-  text-align: center;
-}
-#colorControls input[type="color"] {
-  width: 100%;
-  height: 28px;
-  padding: 1px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  cursor: pointer;
-}
+  /* ── Welcome note (pinned card) ─────────────────────────
+     Edit the text inside #welcomeNote to change what shows
+     on the homepage. Plain text and basic tags (<p>, <br>,
+     <strong>, <em>) all work fine here. */
+  .note-card{
+    position:relative;
+    background:#fff;
+    border: 2.5px solid var(--ink);
+    padding: 30px 32px;
+    margin-top: 32px;
+    box-shadow: 6px 6px 0 var(--shadow);
+  }
+  .pin{
+    position:absolute; top:-3px; left:-3px; right:-3px;
+    height: 6px;
+    background: var(--ink);
+  }
+  .note-label{
+    font-family:'JetBrains Mono', monospace; font-size:0.75rem; text-transform:uppercase;
+    letter-spacing: 0.12em; color: var(--pencil); margin-bottom: 12px;
+  }
+  #welcomeNote{
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+  #welcomeNote p{ margin: 0 0 12px; }
+  #welcomeNote p:last-child{ margin-bottom: 0; }
 
-/* ── STANDARDISED ICON-OVER-TEXT BUTTONS ────────────────
-   Every button and toggle in the QoL / ghost rows uses this
-   pattern: icon on its own line, label below, equal flex width. */
-#qolRow, #ghostRow {
-  display: flex;
-  gap: 6px;
-}
+  /* ── Tool cards ─────────────────────────────────────── */
+  .tools{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin-top: 34px;
+  }
+  @media (max-width: 640px){
+    .tools{ grid-template-columns: 1fr; }
+  }
+  .tool-card{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    background:#fff;
+    border: 2.5px solid var(--ink);
+    padding: 26px 24px 24px;
+    text-decoration:none;
+    box-shadow: 6px 6px 0 var(--shadow);
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .tool-card:hover, .tool-card:focus-visible{
+    transform: translate(-2px,-2px);
+    box-shadow: 8px 8px 0 var(--shadow);
+  }
+  .tool-card:active{
+    transform: translate(1px,1px);
+    box-shadow: 3px 3px 0 var(--shadow);
+  }
+  .tool-card.cyan{ border-left: 6px solid var(--cyan); }
+  .tool-card.orange{ border-left: 6px solid var(--orange); }
 
-/* Buttons */
-#qolRow button {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 6px 4px 5px;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 1px solid #ccc;
-  background: #f5f5f5;
-  font-family: Arial, sans-serif;
-  line-height: 1;
-}
-#qolRow button:hover { background: #e8e8e8; }
-#qolRow button .btn-icon { font-size: 16px; }
-#qolRow button .btn-label { font-size: 10px; color: #444; }
+  .tool-icon{ width: 52px; height: 52px; margin-bottom: 16px; }
+  .tool-icon svg{ width:100%; height:100%; display:block; }
 
-/* Ghost toggle labels */
-#ghostRow label {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 6px 4px 5px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #f5f5f5;
-  cursor: pointer;
-  line-height: 1;
-  user-select: none;
-}
-#ghostRow label:hover { background: #e8e8e8; }
-#ghostRow label input[type="checkbox"] { display: none; }
-#ghostRow label .toggle-icon  { font-size: 16px; }
-#ghostRow label .toggle-label { font-size: 10px; color: #444; text-align: center; }
-/* Dim the label when unchecked */
-#ghostRow label:has(input:not(:checked)) { opacity: 0.5; }
+  .tool-title{
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+    color: var(--ink);
+  }
+  .tool-desc{
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--pencil);
+    margin: 0 0 18px;
+    flex-grow: 1;
+  }
+  .tool-open{
+    font-family:'JetBrains Mono', monospace; font-weight:600; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    align-self:flex-start;
+    border: 2px solid var(--ink);
+    padding: 8px 14px;
+  }
+  .tool-card.cyan .tool-open{ background: var(--cyan); color:#fff; border-color: var(--cyan); }
+  .tool-card.orange .tool-open{ background: var(--orange); color:#fff; border-color: var(--orange); }
 
-/* Speedometer */
-#speedometer {
-  font-size: 12px;
-  color: #444;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-#speedBar {
-  flex: 1;
-  height: 6px;
-  background: #ddd;
-  border-radius: 3px;
-  overflow: hidden;
-}
-#speedFill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #4caf50, #ff9800, #f44336);
-  border-radius: 3px;
-  transition: width 0.05s;
-}
-
-/* ── LEADERBOARD ──────────────────────────────────────── */
-#leaderboard {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 10;
-  background: rgba(0,0,0,0.78);
-  color: #fff;
-  padding: 14px 16px;
-  border-radius: 12px;
-  width: 220px;
-  font-family: Arial, sans-serif;
-}
-#leaderboard h3 {
-  margin: 0 0 10px;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #ffd700;
-  text-align: center;
-}
-.lb-entry {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.lb-pos {
-  font-size: 10px;
-  text-transform: uppercase;
-  color: #aaa;
-  width: 52px;
-  flex-shrink: 0;
-  line-height: 1.2;
-}
-.lb-pos.gold   { color: #ffd700; }
-.lb-pos.silver { color: #c0c0c0; }
-.lb-pos.bronze { color: #cd7f32; }
-.lb-car {
-  width: 36px;
-  height: 36px;
-  border-radius: 4px;
-  object-fit: cover;
-  background: #333;
-  flex-shrink: 0;
-}
-.lb-info { flex: 1; min-width: 0; }
-.lb-name {
-  font-size: 12px;
-  font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #fff;
-}
-.lb-name.pending { color: #888; font-style: italic; font-weight: normal; }
-.lb-time { font-size: 12px; color: #7ef; font-family: monospace; }
-
-/* ── LAP DISPLAY ──────────────────────────────────────── */
-#lapDisplay {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  background: rgba(0,0,0,0.6);
-  color: #fff;
-  padding: 8px 20px;
-  border-radius: 10px;
-  font-family: monospace;
-  font-size: 15px;
-  display: flex;
-  gap: 24px;
-  pointer-events: none;
-}
-#lapDisplay span { color: #7ef; }
-
-/* ── LOCK OVERLAY ─────────────────────────────────────── */
-#lockOverlay {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  background: rgba(0,0,0,0.38);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  pointer-events: none;
-}
-#lockOverlay .lock-icon {
-  font-size: 64px;
-  line-height: 1;
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.8));
-}
-#lockOverlay .lock-msg {
-  font-size: 22px;
-  font-weight: bold;
-  color: #fff;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.9);
-  text-align: center;
-  max-width: 420px;
-  line-height: 1.4;
-}
-#lockOverlay .lock-sub {
-  font-size: 15px;
-  color: rgba(255,255,255,0.7);
-  text-align: center;
-}
-
-/* ── MODAL ────────────────────────────────────────────── */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.modal-backdrop.hidden { display: none; }
-.modal-box {
-  background: #fff;
-  border-radius: 14px;
-  padding: 28px 32px;
-  max-width: 380px;
-  width: 90%;
-  font-family: Arial, sans-serif;
-}
-.modal-box h2 { margin: 0 0 6px; font-size: 20px; }
-.modal-box p  { margin: 0 0 16px; font-size: 14px; color: #555; line-height: 1.5; }
-.modal-box input[type="text"],
-.modal-box input[type="email"] {
-  width: 100%;
-  padding: 9px 12px;
-  border: 1px solid #ccc;
-  border-radius: 7px;
-  font-size: 14px;
-  margin-bottom: 10px;
-}
-.modal-preview {
-  width: 80px; height: 80px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 2px solid #ddd;
-  display: block;
-  margin: 0 auto 14px;
-}
-.modal-btn-row { display: flex; gap: 10px; margin-top: 6px; }
-.modal-btn-row button {
-  flex: 1; padding: 10px; border-radius: 8px;
-  font-size: 14px; cursor: pointer; border: none;
-}
-.btn-primary   { background: #2563eb; color: #fff; font-weight: bold; }
-.btn-primary:hover { background: #1d4ed8; }
-.btn-secondary { background: #f0f0f0; color: #333; }
-.btn-secondary:hover { background: #e0e0e0; }
-.modal-error { color: #c00; font-size: 13px; margin: -4px 0 8px; display: none; }
-
-/* ── ROUND CLOSED MODAL ───────────────────────────────── */
-.modal-closed-icon { font-size: 48px; text-align: center; margin-bottom: 10px; }
-.modal-closed-time { font-size: 28px; font-family: monospace; color: #2563eb; text-align: center; margin: 8px 0 14px; font-weight: bold; }
-
+  footer{
+    text-align:center; margin-top: 48px; font-family:'JetBrains Mono', monospace;
+    color: var(--pencil); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+  }
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<!-- ── LOCK OVERLAY ──────────────────────────────────── -->
-<div id="lockOverlay">
-  <div class="lock-icon">🔒</div>
-  <div class="lock-msg">Upload a car texture to start driving</div>
-  <div class="lock-sub">Use the "Car Texture" file picker in the top-left panel</div>
-</div>
+  <header>
+    <h1>The Art Room</h1>
+    <p class="sub">Tools built for class — pick one to get started</p>
+  </header>
 
-<!-- ── LEFT PANEL ────────────────────────────────────── -->
-<div id="uiPanel">
-  <label>Car Texture
-    <input type="file" id="carTextureUpload" accept="image/*">
-  </label>
-  <label>Building Texture
-    <input type="file" id="buildingTextureUpload" accept="image/*">
-  </label>
-  <label>Skybox / 360 Background
-    <input type="file" id="skyboxUpload" accept="image/*">
-  </label>
-  <label>Ground Texture
-    <input type="file" id="groundUpload" accept="image/*">
-  </label>
-
-  <div id="colorControls">
-    <label>Ambient<br>Color
-      <input type="color" id="ambientColor" value="#ffffff">
-    </label>
-    <label>Sunlight<br>Color
-      <input type="color" id="lightColor" value="#ffffff">
-    </label>
-    <label>Fog<br>Color
-      <input type="color" id="fogColor" value="#bfd1e5">
-    </label>
-  </div>
-
-  <div id="qolRow">
-    <button id="resetBtn">
-      <span class="btn-icon">↺</span>
-      <span class="btn-label">Reset</span>
-    </button>
-    <button id="fullscreenBtn">
-      <span class="btn-icon">⛶</span>
-      <span class="btn-label">Fullscreen</span>
-    </button>
-    <button id="screenshotBtn">
-      <span class="btn-icon">📷</span>
-      <span class="btn-label">Screenshot</span>
-    </button>
-    <button id="muteBtn">
-      <span class="btn-icon" id="muteIcon">🔊</span>
-      <span class="btn-label">Sound</span>
-    </button>
-  </div>
-
-  <div id="ghostRow">
-    <label>
-      <input type="checkbox" id="ghostPB">
-      <span class="toggle-icon">👻</span>
-      <span class="toggle-label">My Best</span>
-    </label>
-    <label>
-      <input type="checkbox" id="ghostCR">
-      <span class="toggle-icon">🏆</span>
-      <span class="toggle-label">Top Record</span>
-    </label>
-  </div>
-
-  <div id="speedometer">
-    <span style="font-size:11px;">SPD</span>
-    <div id="speedBar"><div id="speedFill"></div></div>
-    <span id="speedVal" style="font-size:11px;width:28px;text-align:right;">0</span>
-  </div>
-
-  <div id="info">
-    W/S = Drive &nbsp; A/D = Turn<br>
-    Space = Drift &nbsp; Drag = Look
-  </div>
-</div>
-
-<!-- ── LAP DISPLAY ───────────────────────────────────── -->
-<div id="lapDisplay">
-  <div>Current: <span id="currentLap">0:00.000</span></div>
-  <div>Best: <span id="bestLap">--:--.---</span></div>
-</div>
-
-<!-- ── LEADERBOARD ───────────────────────────────────── -->
-<div id="leaderboard">
-  <h3>🏁 Leaderboard</h3>
-  <div id="lbEntries"></div>
-</div>
-
-<!-- ── SUBMIT MODAL ──────────────────────────────────── -->
-<div id="submitModal" class="modal-backdrop hidden">
-  <div class="modal-box">
-    <h2 id="submitTitle">🏆 Top 3 Lap!</h2>
-    <p id="submitDesc">You've set a top-3 time! Submit your score to the leaderboard. Your car texture will be shown pending approval.</p>
-    <img id="submitPreview" class="modal-preview" src="" alt="Your car">
-    <div id="submitError" class="modal-error"></div>
-    <input type="text"  id="submitName"  placeholder="Your name" maxlength="40">
-    <input type="email" id="submitEmail" placeholder="School email (must end in student.us)">
-    <div class="modal-btn-row">
-      <button class="btn-secondary" id="submitCancel">Maybe later</button>
-      <button class="btn-primary"   id="submitConfirm">Submit ✓</button>
+  <!-- ══════════════════════════════════════════════════════
+       WELCOME NOTE — edit the text below to change the
+       homepage message. Nothing else on this page needs to
+       change; just rewrite the sentences inside the <p> tags,
+       or add/remove <p> paragraphs.
+       ══════════════════════════════════════════════════════ -->
+  <div class="note-card">
+    <div class="pin" aria-hidden="true"></div>
+    <div class="note-label">Welcome</div>
+    <div id="welcomeNote">
+      <p>Hi! This page collects the tools we use in class, all in one place. No logins, nothing to install — just pick a tool below and it'll open right in your browser.</p>
+      <p>New tools will show up here as they're built, so check back if you're looking for something new.</p>
     </div>
   </div>
-</div>
+  <!-- ══════════════════════════════════════════════════ -->
 
-<!-- Change info button — shown in UI panel after first submission -->
-<div id="changeInfoWrap" style="display:none; position:absolute; bottom:62px; left:50%; transform:translateX(-50%); z-index:10;">
-  <button id="changeInfoBtn" style="background:rgba(0,0,0,0.6); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding:6px 14px; font-size:12px; cursor:pointer; backdrop-filter:blur(4px);">
-    ✏️ Edit my leaderboard info
-  </button>
-</div>
+  <div class="tools">
+    <a class="tool-card cyan" href="texturemap.html">
+      <div class="tool-icon" aria-hidden="true">
+        <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 20 L14 40 Q14 46 26 46 Q38 46 38 40 L38 20" stroke="#1C2226" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <ellipse cx="26" cy="20" rx="12" ry="5" stroke="#1C2226" stroke-width="2.5"/>
+          <path d="M38 24 Q47 24 47 31 Q47 38 39 37" stroke="#1C2226" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M17 22 Q26 26 35 22" stroke="#1B8FA6" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="tool-title">Texture Map Cup</h2>
+      <p class="tool-desc">Upload your own texture, drop it onto a 3D car, and drive it around the track to see how it wraps. A hands-on way to understand UV mapping.</p>
+      <span class="tool-open">Open tool →</span>
+    </a>
 
-<!-- ── ROUND CLOSED MODAL ────────────────────────────── -->
-<div id="roundClosedModal" class="modal-backdrop hidden">
-  <div class="modal-box" style="text-align:center;">
-    <div class="modal-closed-icon">🏁</div>
-    <h2 style="margin:0 0 8px;">Top 3 Time!</h2>
-    <div class="modal-closed-time" id="roundClosedTime">--:--.---</div>
-    <p style="margin:0 0 20px;">This round is currently closed — scores aren't being accepted right now. Come back when the next round opens!</p>
-    <div class="modal-btn-row">
-      <button class="btn-primary" id="roundClosedOk">Got it</button>
-    </div>
+    <a class="tool-card orange" href="twisted.html">
+      <div class="tool-icon" aria-hidden="true">
+        <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="26" cy="26" r="19" stroke="#1C2226" stroke-width="2.5"/>
+          <path d="M26 15 L26 26 L34 31" stroke="#1C2226" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M26 7 L26 11 M8 26 L4 26 M26 45 L26 41" stroke="#E0632A" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="tool-title">Twisted Art</h2>
+      <p class="tool-desc">A timed drawing game. Start from a prompt, and when the clock runs out a new twist gets added to keep your piece evolving.</p>
+      <span class="tool-open">Open tool →</span>
+    </a>
   </div>
+
+  <footer>Made for the art room</footer>
 </div>
-
-<!-- ── IMPORT MAP (required for GLTFLoader.js to resolve 'three') ── -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "./build/three.module.js"
-  }
-}
-</script>
-
-<!-- ── FIREBASE ──────────────────────────────────────── -->
-<script type="module">
-import { initializeApp }                        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc,
-         onSnapshot }                           from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import * as THREE                               from './build/three.module.js';
-import { GLTFLoader }                           from './jsm/loaders/GLTFLoader.js';
-
-// ═══════════════════════════════════════════════════════
-// FIREBASE INIT
-// ═══════════════════════════════════════════════════════
-const firebaseConfig = {
-  apiKey:            "AIzaSyBbqvk4u7vaqKg_55hlmF5n77r3NBaLPAc",
-  authDomain:        "texturemapcup.firebaseapp.com",
-  projectId:         "texturemapcup",
-  storageBucket:     "texturemapcup.firebasestorage.app",
-  messagingSenderId: "105226943934",
-  appId:             "1:105226943934:web:134635bc280de5e2174def"
-};
-const fbApp = initializeApp(firebaseConfig);
-const db    = getFirestore(fbApp);
-
-// ── Firestore helpers ─────────────────────────────────
-// All leaderboard data lives in a single document for simplicity.
-// Firestore doc size limit is 1 MB — well within range for 10 entries + thumbnails.
-const LB_DOC  = doc(db, 'leaderboard', 'data');
-const CR_DOC  = doc(db, 'leaderboard', 'classRecordGhost');
-const ST_DOC  = doc(db, 'leaderboard', 'settings');
-
-// ── Leaderboard pause state ───────────────────────────
-let leaderboardPaused = false;
-
-async function loadSettings() {
-  const d = await fbGet(ST_DOC);
-  leaderboardPaused = d ? !!d.paused : false;
-}
-
-// Live-listen so pause/resume is reflected immediately without a page reload
-onSnapshot(ST_DOC, (snap) => {
-  leaderboardPaused = snap.exists() ? !!snap.data().paused : false;
-});
-
-async function fbGet(ref) {
-  try {
-    const snap = await getDoc(ref);
-    return snap.exists() ? snap.data() : null;
-  } catch(e) { console.error('fbGet failed', e); return null; }
-}
-async function fbSet(ref, data) {
-  try { await setDoc(ref, data); }
-  catch(e) { console.error('fbSet failed', e); }
-}
-
-// ═══════════════════════════════════════════════════════
-// LEADERBOARD
-// ═══════════════════════════════════════════════════════
-const MAX_ENTRIES = 10;
-const POSITIONS   = ['1st Place','2nd Place','3rd Place'];
-const POS_CLASS   = ['gold','silver','bronze'];
-
-let lbEntries = [];
-
-async function loadLeaderboard() {
-  // onSnapshot fires immediately and populates lbEntries, so we only
-  // need the manual fbGet as a fallback if the snapshot hasn't arrived yet.
-  if(lbEntries.length === 0) {
-    const data = await fbGet(LB_DOC);
-    lbEntries = data ? (data.entries || []) : [];
-    renderLeaderboard();
-    refreshRecordGhostFromLeaderboard();
-  }
-}
-
-async function saveLeaderboard() {
-  await fbSet(LB_DOC, { entries: lbEntries });
-}
-
-// Live listener — updates the leaderboard display whenever any student submits
-onSnapshot(LB_DOC, (snap) => {
-  if (!snap.exists()) return;
-  lbEntries = snap.data().entries || [];
-  renderLeaderboard();
-  refreshRecordGhostFromLeaderboard();
-});
-
-function renderLeaderboard() {
-  const container = document.getElementById('lbEntries');
-  container.innerHTML = '';
-  for (let i = 0; i < 3; i++) {
-    const e   = lbEntries[i];
-    const div = document.createElement('div');
-    div.className = 'lb-entry';
-    if (e) {
-      const imgSrc   = e.approved && e.textureDataUrl ? e.textureDataUrl : 'placeholdercartexture.png';
-      const nameText = e.approved ? e.name : 'Pending approval';
-      div.innerHTML = `
-        <div class="lb-pos ${POS_CLASS[i]}">${POSITIONS[i]}</div>
-        <img class="lb-car" src="${imgSrc}" alt="car">
-        <div class="lb-info">
-          <div class="lb-name ${e.approved ? '' : 'pending'}">${nameText}</div>
-          <div class="lb-time">${e.time}</div>
-        </div>`;
-    } else {
-      div.innerHTML = `
-        <div class="lb-pos ${POS_CLASS[i]}">${POSITIONS[i]}</div>
-        <img class="lb-car" src="placeholdercartexture.png" alt="car">
-        <div class="lb-info">
-          <div class="lb-name pending">—</div>
-          <div class="lb-time">--:--.---</div>
-        </div>`;
-    }
-    container.appendChild(div);
-  }
-}
-
-function isTop3(timeMs) {
-  if (lbEntries.length < 3) return true;
-  return timeMs < lbEntries[2].timeMs;
-}
-
-// Returns true if this time is better than the player's existing entry (or they have none)
-function isBetterThanOwn(email, timeMs) {
-  const existing = lbEntries.find(e => e.email.toLowerCase() === email.toLowerCase());
-  return !existing || timeMs < existing.timeMs;
-}
-
-// ═══════════════════════════════════════════════════════
-// RECORD GHOST STORAGE
-// Ghost frames are stored inside each leaderboard entry so when an
-// entry is deleted/replaced the ghost automatically updates.
-// The "top record" ghost is always the ghost of lbEntries[0].
-// ═══════════════════════════════════════════════════════
-async function loadRecordGhost() {
-  // Pull the ghost from the current top leaderboard entry (index 0)
-  const data = await fbGet(LB_DOC);
-  const entries = data ? (data.entries || []) : [];
-  return entries.length > 0 ? (entries[0].ghostFrames || null) : null;
-}
-
-async function saveRecordGhost(frames) {
-  // Save ghost frames into the submitter's own leaderboard entry.
-  // Called right after their entry is upserted, so lbEntries is fresh.
-  // We update the entry in place without a full re-read.
-  const fresh = await fbGet(LB_DOC);
-  const entries = fresh ? (fresh.entries || []) : [];
-  // Find the entry that matches the current session email (just submitted)
-  const idx = sessionSubmission
-    ? entries.findIndex(e => e.email.toLowerCase() === sessionSubmission.email.toLowerCase())
-    : 0;
-  if (idx !== -1) {
-    entries[idx].ghostFrames = frames;
-    await fbSet(LB_DOC, { entries });
-  }
-}
-
-// Load the top-record ghost after the leaderboard loads
-function refreshRecordGhostFromLeaderboard() {
-  if (lbEntries.length > 0 && lbEntries[0].ghostFrames) {
-    crGhostFrames = lbEntries[0].ghostFrames;
-  } else {
-    crGhostFrames = [];
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// SCENE
-// ═══════════════════════════════════════════════════════
-const scene = new THREE.Scene();
-scene.fog   = new THREE.Fog(0xbfd1e5, 80, 600);
-
-let carTextureApplied = false;
-let carTextureDataUrl = null;
-let pendingCarTextureUrl = null;  // holds URL if uploaded before car model finished loading
-const lockOverlay = document.getElementById('lockOverlay');
-
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 3000);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type    = THREE.PCFShadowMap;
-document.body.appendChild(renderer.domElement);
-
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
-scene.add(ambientLight);
-
-const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
-directionalLight.position.set(100, 200, 100);
-directionalLight.castShadow = true;
-directionalLight.shadow.mapSize.set(4096, 4096);
-directionalLight.shadow.camera.near   = 1;
-directionalLight.shadow.camera.far    = 800;
-directionalLight.shadow.camera.left   = -350;
-directionalLight.shadow.camera.right  =  200;
-directionalLight.shadow.camera.top    =  250;
-directionalLight.shadow.camera.bottom = -200;
-directionalLight.shadow.bias = -0.0005;
-scene.add(directionalLight);
-
-const textureLoader = new THREE.TextureLoader();
-const gltfLoader    = new GLTFLoader();
-
-textureLoader.load('RMSField.png', (tex) => {
-  tex.mapping = THREE.EquirectangularReflectionMapping;
-  scene.background = tex;
-});
-
-const grassTexture = textureLoader.load('RMSgrass.png');
-grassTexture.wrapS = THREE.RepeatWrapping;
-grassTexture.wrapT = THREE.RepeatWrapping;
-grassTexture.repeat.set(300, 300);
-const groundMaterial = new THREE.MeshStandardMaterial({ map: grassTexture });
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), groundMaterial);
-ground.rotation.x = -Math.PI / 2;
-ground.receiveShadow = true;
-scene.add(ground);
-
-// ═══════════════════════════════════════════════════════
-// SKID MARKS
-// ═══════════════════════════════════════════════════════
-// Small flat quads placed just above the track surface, fading over time.
-// A pool of reusable meshes avoids constant geometry allocation.
-
-const SKID_POOL_SIZE   = 300;    // max simultaneous marks
-const SKID_FADE_RATE   = 0.008; // opacity lost per physics tick
-const SKID_MARK_W      = 0.28;  // world-unit width (~tyre width)
-const SKID_MARK_H      = 0.55;  // world-unit length per stamp
-const SKID_SPAWN_EVERY = 2;     // physics ticks between stamps (controls density)
-
-const skidGeo = new THREE.PlaneGeometry(SKID_MARK_W, SKID_MARK_H);
-skidGeo.rotateX(-Math.PI / 2); // lay flat
-
-// All marks share one material pool entry each — cheap, no texture needed
-const skidPool = [];
-for(let i = 0; i < SKID_POOL_SIZE; i++) {
-  const mat  = new THREE.MeshBasicMaterial({
-    color:       0x111008,
-    transparent: true,
-    opacity:     0,
-    depthWrite:  false,
-  });
-  const mesh = new THREE.Mesh(skidGeo, mat);
-  mesh.visible = false;
-  mesh.renderOrder = 1;
-  scene.add(mesh);
-  skidPool.push({ mesh, opacity: 0, active: false });
-}
-let skidPoolHead = 0;  // next slot to use (ring buffer)
-let skidSpawnTick = 0;
-
-function spawnSkid(wx, wy, wz, angle) {
-  const slot = skidPool[skidPoolHead];
-  skidPoolHead = (skidPoolHead + 1) % SKID_POOL_SIZE;
-  slot.mesh.position.set(wx, wy + 0.04, wz);
-  slot.mesh.rotation.y = angle;
-  slot.opacity = 0.7;
-  slot.mesh.material.opacity = 0.7;
-  slot.mesh.visible = true;
-  slot.active = true;
-}
-
-function tickSkids() {
-  for(const slot of skidPool) {
-    if(!slot.active) continue;
-    slot.opacity -= SKID_FADE_RATE;
-    if(slot.opacity <= 0) {
-      slot.opacity = 0;
-      slot.mesh.visible = false;
-      slot.active = false;
-    } else {
-      slot.mesh.material.opacity = slot.opacity;
-    }
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// CAR
-// ═══════════════════════════════════════════════════════
-let carModel = null;
-let frontWheelPivot = null, frontWheelSpinner = null;
-let backWheelPivot  = null, backWheelSpinner  = null;
-let wheelSteer = 0;
-const maxWheelSteer = 0.3, wheelSpinFactor = 0.4;
-
-const CAR_SPAWN_POS = new THREE.Vector3(-54, 0, 0);
-const CAR_SPAWN_ROT = Math.PI / 2;
-
-function makeWheelPivot(wheel) {
-  const pivot = new THREE.Group(), parent = wheel.parent;
-  const box = new THREE.Box3().setFromObject(wheel);
-  const worldCenter = new THREE.Vector3();
-  box.getCenter(worldCenter);
-  const localCenter = parent.worldToLocal(worldCenter.clone());
-  parent.add(pivot);
-  pivot.position.copy(localCenter);
-  parent.remove(wheel);
-  wheel.position.sub(localCenter);
-  pivot.add(wheel);
-  return pivot;
-}
-
-gltfLoader.load('Car.glb', (gltf) => {
-  carModel = gltf.scene;
-  carModel.position.copy(CAR_SPAWN_POS);
-  carModel.rotation.y = CAR_SPAWN_ROT;
-  const box = new THREE.Box3().setFromObject(carModel);
-  carModel.position.y -= box.min.y;
-  carModel.position.y += 0.38;
-  carModel.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-  scene.add(carModel);
-  smoothedCarPos.copy(carModel.position);
-  prevRenderPos.copy(carModel.position);
-  postPhysicsPos.copy(carModel.position);
-  carModel.updateMatrixWorld(true);
-  CAR_SPAWN_POS.y = carModel.position.y;
-
-  const tireFront = carModel.getObjectByName('tire1_4');
-  const tireBack  = carModel.getObjectByName('tire2_2');
-  if (tireFront) {
-    frontWheelPivot   = makeWheelPivot(tireFront);
-    frontWheelSpinner = new THREE.Group();
-    frontWheelPivot.add(frontWheelSpinner);
-    frontWheelPivot.remove(tireFront);
-    frontWheelSpinner.add(tireFront);
-  }
-  if (tireBack) {
-    backWheelPivot   = makeWheelPivot(tireBack);
-    backWheelSpinner = new THREE.Group();
-    backWheelPivot.add(backWheelSpinner);
-    backWheelPivot.remove(tireBack);
-    backWheelSpinner.add(tireBack);
-  }
-
-  // If the student uploaded a texture before the car finished loading, apply it now
-  if (pendingCarTextureUrl) {
-    applyCarTexture(pendingCarTextureUrl);
-    pendingCarTextureUrl = null;
-  }
-});
-
-function resetCar() {
-  if (!carModel) return;
-  carModel.position.copy(CAR_SPAWN_POS);
-  carModel.rotation.set(0, CAR_SPAWN_ROT, 0);
-  carYaw = CAR_SPAWN_ROT;
-  speed = 0; lateralVel.set(0,0,0); steerRate = 0;
-  smoothedCarPos.copy(carModel.position);
-  lapStartTime = null; hasLeftFinishLine = false; checkpointCleared = false;
-  currentLapEl.textContent = '0:00.000';
-  currentLapGhostFrames = [];
-}
-
-// ═══════════════════════════════════════════════════════
-// GHOST CARS
-// ═══════════════════════════════════════════════════════
-let pbGhostFrames = [], crGhostFrames = [];
-let currentLapGhostFrames = [];
-let pendingGhostFrames = [];  // ghost for the lap just completed, saved if player submits
-let wasDrifting = false;      // tracks drift transition for entry velocity seeding
-let ghostPlaybackPBFrame  = 0, ghostPlaybackCRFrame = 0;
-let pbGhostMesh = null,        crGhostMesh = null;
-let ghostsInitialized = false;
-
-function initGhosts() {
-  pbGhostMesh = carModel.clone();
-  pbGhostMesh.traverse((c) => {
-    if (c.isMesh) {
-      c.material = c.material.clone();
-      c.material.transparent = true; c.material.opacity = 0.38;
-      c.material.color = new THREE.Color(0x4488ff);
-      c.material.emissive = new THREE.Color(0x001133);
-      c.castShadow = false;
-    }
-  });
-  pbGhostMesh.visible = false;
-  scene.add(pbGhostMesh);
-
-  crGhostMesh = carModel.clone();
-  crGhostMesh.traverse((c) => {
-    if (c.isMesh) {
-      c.material = c.material.clone();
-      c.material.transparent = true; c.material.opacity = 0.38;
-      c.material.color = new THREE.Color(0xffcc00);
-      c.material.emissive = new THREE.Color(0x221100);
-      c.castShadow = false;
-    }
-  });
-  crGhostMesh.visible = false;
-  scene.add(crGhostMesh);
-}
-
-function updateGhost(mesh, frames, idx) {
-  if (!mesh || frames.length === 0) return;
-  const f = frames[Math.min(idx, frames.length - 1)];
-  mesh.position.set(f.px, f.py, f.pz);
-  mesh.quaternion.set(f.qx, f.qy, f.qz, f.qw);
-}
-
-const ghostPBCheckbox = document.getElementById('ghostPB');
-const ghostCRCheckbox = document.getElementById('ghostCR');
-
-// ═══════════════════════════════════════════════════════
-// COLLISION
-// ═══════════════════════════════════════════════════════
-const aabbObstacles = [], aabbModels = [];
-const _carBox = new THREE.Box3(), _meshBox = new THREE.Box3();
-function registerAabbModel(m) { aabbModels.push(m); }
-function updateAabbObstacles() {
-  aabbObstacles.length = 0;
-  for (const model of aabbModels) {
-    model.traverse((c) => { if (c.isMesh) { _meshBox.setFromObject(c); aabbObstacles.push(_meshBox.clone()); } });
-  }
-}
-const BOUNCE = 0.4, CAR_INSET_X = 0.7, CAR_INSET_Z = 1.0;
-function resolveAabb() {
-  if (!carModel) return;
-  _carBox.setFromObject(carModel);
-  _carBox.min.x += CAR_INSET_X; _carBox.max.x -= CAR_INSET_X;
-  _carBox.min.z += CAR_INSET_Z; _carBox.max.z -= CAR_INSET_Z;
-  for (const box of aabbObstacles) {
-    if (!_carBox.intersectsBox(box)) continue;
-    const ox = Math.min(_carBox.max.x-box.min.x, box.max.x-_carBox.min.x);
-    const oz = Math.min(_carBox.max.z-box.min.z, box.max.z-_carBox.min.z);
-    if (ox < oz) {
-      carModel.position.x += (_carBox.getCenter(new THREE.Vector3()).x < box.getCenter(new THREE.Vector3()).x ? -1 : 1) * ox;
-    } else {
-      carModel.position.z += (_carBox.getCenter(new THREE.Vector3()).z < box.getCenter(new THREE.Vector3()).z ? -1 : 1) * oz;
-    }
-    speed = -speed * BOUNCE; playSound('bump');
-    _carBox.setFromObject(carModel);
-    _carBox.min.x += CAR_INSET_X; _carBox.max.x -= CAR_INSET_X;
-    _carBox.min.z += CAR_INSET_Z; _carBox.max.z -= CAR_INSET_Z;
-  }
-}
-
-const wallMeshes = [], _raycaster = new THREE.Raycaster();
-const RAY_ORIGIN_Y = 2.0, RAY_DOWN = new THREE.Vector3(0,-1,0), RAY_FAR = 2.5;
-const CAR_HALF_W = 1.0, CAR_HALF_L = 1.8;
-const SAMPLE_OFFSETS_LOCAL = [
-  new THREE.Vector3(0,0,0),
-  new THREE.Vector3(CAR_HALF_W,0,0), new THREE.Vector3(-CAR_HALF_W,0,0),
-  new THREE.Vector3(0,0,-CAR_HALF_L), new THREE.Vector3(0,0,CAR_HALF_L),
-  new THREE.Vector3(CAR_HALF_W,0,-CAR_HALF_L), new THREE.Vector3(-CAR_HALF_W,0,-CAR_HALF_L),
-  new THREE.Vector3(CAR_HALF_W,0,CAR_HALF_L),  new THREE.Vector3(-CAR_HALF_W,0,CAR_HALF_L),
-];
-function resolveWallRaycasts() {
-  if (!carModel || wallMeshes.length === 0) return;
-  const carPos = carModel.position, carQuat = carModel.quaternion;
-  for (const lo of SAMPLE_OFFSETS_LOCAL) {
-    const wo = lo.clone().applyQuaternion(carQuat);
-    _raycaster.set(new THREE.Vector3(carPos.x+wo.x, RAY_ORIGIN_Y, carPos.z+wo.z), RAY_DOWN);
-    _raycaster.far = RAY_FAR;
-    const hits = _raycaster.intersectObjects(wallMeshes, false);
-    if (hits.length === 0) continue;
-    const hit = hits[0];
-    const wn  = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
-    wn.y = 0; if (wn.lengthSq() < 0.0001) continue; wn.normalize();
-    const toHit = new THREE.Vector3(carPos.x-hit.point.x, 0, carPos.z-hit.point.z);
-    if (wn.dot(toHit) < 0) wn.negate();
-    const fd = new THREE.Vector3(0,0,-1).applyQuaternion(carModel.quaternion);
-    const ir = Math.abs(fd.dot(wn));
-    if (ir < 0.5) {
-      speed *= (1 - ir*0.6); lateralVel.set(0,0,0);
-      carModel.rotation.y += ir*1.4*Math.sign(fd.clone().cross(wn).y);
-      playSound('bump');
-    } else {
-      speed = -speed * Math.max(0,(1-(ir-0.5)*0.8)*0.25);
-      const ws = fd.clone().cross(wn).y;
-      carModel.rotation.y += (ir-0.5)*1.8*(Math.abs(ws)>0.01?Math.sign(ws):1);
-      lateralVel.set(0,0,0); playSound('bump_hard');
-    }
-    carModel.position.addScaledVector(wn, lo.length()+0.3); break;
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// BUILDING + TRACK
-// ═══════════════════════════════════════════════════════
-let buildingModel;
-gltfLoader.load('Tower.glb', (gltf) => {
-  buildingModel = gltf.scene;
-  buildingModel.position.set(-60,0,-40); buildingModel.scale.set(1.8,1.8,1.8);
-  buildingModel.traverse((c) => { if (c.isMesh) { c.castShadow=true; c.receiveShadow=true; } });
-  scene.add(buildingModel); registerAabbModel(buildingModel);
-});
-
-let finishLineBox = null, hasLeftFinishLine = false;
-gltfLoader.load('Track.glb', (gltf) => {
-  const tm = gltf.scene; tm.position.y = 0.76;
-  tm.traverse((c) => { if (c.isMesh) { c.castShadow=true; c.receiveShadow=true; } });
-  scene.add(tm); tm.updateMatrixWorld(true);
-  const wn = tm.getObjectByName('Wall');
-  if (wn) wn.traverse((c) => { if (c.isMesh) wallMeshes.push(c); });
-  const fn = tm.getObjectByName('Finishline');
-  if (fn) {
-    finishLineBox = new THREE.Box3().setFromObject(fn);
-    finishLineBox.min.y -= 1; finishLineBox.max.y += 1; fn.visible = false;
-  }
-});
-
-function applyTexture(model, tex) {
-  tex.flipY = false;
-  model.traverse((c) => { if (c.isMesh) { c.material.map=tex; c.material.needsUpdate=true; } });
-}
-
-// ═══════════════════════════════════════════════════════
-// INPUT
-// ═══════════════════════════════════════════════════════
-const keys = {};
-window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; if(e.key===' ') e.preventDefault(); });
-window.addEventListener('keyup',   (e) => { keys[e.key.toLowerCase()] = false; });
-
-let mouseDown=false, yaw=0, pitch=0;
-window.addEventListener('mousedown', ()=>mouseDown=true);
-window.addEventListener('mouseup',   ()=>mouseDown=false);
-window.addEventListener('mousemove', (e)=>{
-  if(!mouseDown) return;
-  yaw  -= e.movementX*0.004; pitch -= e.movementY*0.004;
-  pitch = Math.max(-0.8, Math.min(0.35, pitch));
-});
-
-// ═══════════════════════════════════════════════════════
-// PHYSICS
-// ═══════════════════════════════════════════════════════
-let speed=0;
-const maxSpeed=0.42, acceleration=0.004, friction=0.004;
-
-// ── Steering & drift tuning knobs ────────────────────
-// BASE_TURN: max turn rate at low speed (no speed penalty)
-const BASE_TURN = 0.032;
-// TURN_SPEED_PENALTY: how much turn rate drops at full speed without drifting.
-//   0 = no penalty (old behaviour), 1 = zero turning at max speed.
-//   0.55 means at full speed you have 45% of base turn rate — tight corners
-//   require drifting, gentle corners are still manageable.
-const TURN_SPEED_PENALTY = 0.55;
-// DRIFT_TURN_BOOST: multiplier on turn rate while drifting.
-//   Lower than before (1.2 vs 1.5) so drift isn't a magic tight-turn button,
-//   but it still meaningfully recovers the turn radius lost to speed penalty.
-const DRIFT_TURN_BOOST = 1.2;
-
-let lateralVel = new THREE.Vector3();
-const DRIFT_GRIP=0.18, DRIFT_GRIP_SLIDE=0.006, DRIFT_BUILDUP=0.025;
-const NATURAL_BLEED=0.012, DRIFT_FRICTION=0.0008;
-// How strongly steer input rotates the slide direction mid-drift.
-// Kept low so counter-steer adjusts direction without cancelling the slide.
-const DRIFT_STEER_INFLUENCE = 0.004;
-const baseOffset=new THREE.Vector3(0,3,8), lookOffset=new THREE.Vector3(0,1,0);
-const smoothedCarPos=new THREE.Vector3();
-const _spinAxis=new THREE.Vector3(1,0,0), _spinQ=new THREE.Quaternion();
-let steerRate=0;
-const STEER_BUILDUP=0.14, STEER_FALLOFF=0.18;
-// Physics-authoritative yaw — never read back from carModel.rotation/quaternion
-let carYaw = Math.PI / 2;  // matches CAR_SPAWN_ROT
-
-// ═══════════════════════════════════════════════════════
-// LAP TIMER
-// ═══════════════════════════════════════════════════════
-const currentLapEl=document.getElementById('currentLap'), bestLapEl=document.getElementById('bestLap');
-let lapStartTime=null, bestLapMs=null;
-const checkpointBox=new THREE.Box3(new THREE.Vector3(-148,-2,16), new THREE.Vector3(-94,4,37));
-let checkpointCleared=false;
-
-function formatTime(ms) {
-  const m=Math.floor(ms/60000), s=Math.floor((ms%60000)/1000), mil=Math.floor(ms%1000);
-  return `${m}:${String(s).padStart(2,'0')}.${String(mil).padStart(3,'0')}`;
-}
-function updateLapTimer() {
-  if(lapStartTime===null) return;
-  currentLapEl.textContent = formatTime(performance.now()-lapStartTime);
-}
-
-// ═══════════════════════════════════════════════════════
-// SOUND
-// ═══════════════════════════════════════════════════════
-const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-let engineGain, engineOsc, driftSoundNode, soundUnlocked=false;
-
-let engineLFO, engineLFOGain;
-function initSound() {
-  if(soundUnlocked) return; soundUnlocked=true;
-
-  // Main engine oscillator (sawtooth = harsh/buzzy engine tone)
-  engineOsc  = audioCtx.createOscillator();
-  engineGain = audioCtx.createGain();
-
-  // Low-pass filter softens the raw sawtooth
-  const lpf = audioCtx.createBiquadFilter();
-  lpf.type = 'lowpass'; lpf.frequency.value = 500; lpf.Q.value = 1.2;
-
-  // LFO modulates the engine pitch to create rumble/wobble.
-  // Rate and depth both increase with speed for a convincing rev effect.
-  engineLFO     = audioCtx.createOscillator();
-  engineLFOGain = audioCtx.createGain();
-  engineLFO.type = 'sine';
-  engineLFO.frequency.value = 4;   // Hz — slow wobble at idle
-  engineLFOGain.gain.value  = 3;   // semitone-equivalent depth at idle
-  engineLFO.connect(engineLFOGain);
-  engineLFOGain.connect(engineOsc.frequency); // FM: LFO → carrier frequency
-
-  engineOsc.type = 'sawtooth';
-  engineOsc.frequency.value = 60;
-  engineOsc.connect(lpf);
-  lpf.connect(engineGain);
-  engineGain.connect(audioCtx.destination);
-  engineGain.gain.value = 0;
-  engineOsc.start();
-  engineLFO.start();
-}
-function updateEngineSound(spd, isDrifting) {
-  if(!soundUnlocked) return;
-  const n   = Math.abs(spd) / maxSpeed;
-  const t   = audioCtx.currentTime;
-  const baseHz = 55 + n * 130 + (isDrifting ? 25 : 0);
-  // 0.3s time constant — gradual rev-up and rev-down
-  engineOsc.frequency.setTargetAtTime(baseHz, t, 0.55);
-  engineGain.gain.setTargetAtTime(n * 0.042 + 0.008, t, 0.3);
-  // LFO rate: 6 Hz at idle → 22 Hz at full speed (engine roughness)
-  engineLFO.frequency.setTargetAtTime(6 + n * 16, t, 0.08);
-  // LFO depth: very subtle — just enough to feel alive, not drowning
-  engineLFOGain.gain.setTargetAtTime(0.8 + n * 2.5, t, 0.08);
-}
-function playThud() {
-  // Low dull thump: a short sine burst at ~60Hz with fast decay,
-  // filtered through a low-pass to keep it bassy and remove click.
-  if(!soundUnlocked) return;
-  const sr  = audioCtx.sampleRate;
-  const dur = 0.22;  // seconds
-  const buf = audioCtx.createBuffer(1, sr * dur, sr);
-  const d   = buf.getChannelData(0);
-  for(let i = 0; i < d.length; i++) {
-    const t   = i / sr;
-    const env = Math.exp(-t * 18);   // fast exponential decay
-    // Pitch starts at 90Hz and drops quickly — gives the "thud" character
-    const freq = 90 * Math.exp(-t * 12);
-    d[i] = Math.sin(2 * Math.PI * freq * t) * env * 0.9;
-  }
-  const src = audioCtx.createBufferSource();
-  src.buffer = buf;
-  // Low-pass keeps it thumpy, not clicky
-  const lp = audioCtx.createBiquadFilter();
-  lp.type = 'lowpass'; lp.frequency.value = 180;
-  const g = audioCtx.createGain();
-  g.gain.value = 0.32;
-  src.connect(lp); lp.connect(g); g.connect(audioCtx.destination);
-  src.start();
-}
-
-function playSound(type) {
-  if(!soundUnlocked) return;
-  if(type === 'bump') {
-    // Glancing hit: just the thud
-    playThud();
-  } else if(type === 'bump_hard') {
-    // Perpendicular hit: thud + high scrape noise on top
-    playThud();
-    const sr  = audioCtx.sampleRate;
-    const buf = audioCtx.createBuffer(1, sr * 0.12, sr);
-    const d   = buf.getChannelData(0);
-    for(let i = 0; i < d.length; i++)
-      d[i] = (Math.random()*2-1) * Math.pow(1 - i/(sr*0.12), 1.5) * 0.3;
-    const src = audioCtx.createBufferSource(); src.buffer = buf;
-    const hp = audioCtx.createBiquadFilter();
-    hp.type = 'highpass'; hp.frequency.value = 1800;
-    const g = audioCtx.createGain(); g.gain.value = 0.35;
-    src.connect(hp); hp.connect(g); g.connect(audioCtx.destination);
-    src.start();
-  } else if(type==='lap') {
-    const sr=audioCtx.sampleRate;
-    const buf=audioCtx.createBuffer(1,sr*0.15,sr);
-    const d=buf.getChannelData(0);
-    for(let i=0;i<d.length;i++){
-      const t=i/sr, env=Math.pow(1-i/d.length,0.5);
-      d[i]=Math.sin(2*Math.PI*880*t)*env*0.12+Math.sin(2*Math.PI*1320*t)*env*0.08;
-    }
-    const src=audioCtx.createBufferSource(); src.buffer=buf;
-    src.connect(audioCtx.destination); src.start();
-  }
-}
-// Tire squeal: pure broadband white noise shaped by two filters.
-// A peaking EQ boosts the mid-high band (1.5–4kHz) where rubber squeal
-// lives, and a high-shelf cuts the very top so it doesn't sound digital.
-// No pitched oscillators — real tire noise is inharmonic friction, not a tone.
-function updateDriftSound(isDrifting) {
-  if(!soundUnlocked) return;
-  if(isDrifting && !driftSoundNode) {
-    const sr  = audioCtx.sampleRate;
-    // White noise buffer
-    const buf = audioCtx.createBuffer(1, sr * 2, sr);
-    const d   = buf.getChannelData(0);
-    for(let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-
-    driftSoundNode = audioCtx.createBufferSource();
-    driftSoundNode.buffer = buf;
-    driftSoundNode.loop   = true;
-
-    // High-pass: cut low rumble below ~400Hz
-    const hp = audioCtx.createBiquadFilter();
-    hp.type = 'highpass'; hp.frequency.value = 400; hp.Q.value = 0.7;
-
-    // Peaking EQ: boost the squeal band around 2.2kHz
-    const peak = audioCtx.createBiquadFilter();
-    peak.type = 'peaking'; peak.frequency.value = 2200;
-    peak.Q.value = 1.4; peak.gain.value = 18;
-
-    // Low-pass: soften the top end so it doesn't sound like static
-    const lp = audioCtx.createBiquadFilter();
-    lp.type = 'lowpass'; lp.frequency.value = 5500; lp.Q.value = 0.5;
-
-    // Bring the peak boost way down and lower the centre frequency
-    // so it sits in the upper-mid range (~1.2kHz) not the harsh presence band
-    peak.frequency.value = 1200;
-    peak.Q.value         = 0.9;
-    peak.gain.value      = 8;   // was 18 — much gentler lift
-
-    const g = audioCtx.createGain();
-    g.gain.value = 0.06;
-
-    driftSoundNode.connect(hp);
-    hp.connect(peak);
-    peak.connect(lp);
-    lp.connect(g);
-    g.connect(audioCtx.destination);
-    driftSoundNode.start();
-  } else if(!isDrifting && driftSoundNode) {
-    driftSoundNode.stop();
-    driftSoundNode = null;
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// SUBMIT MODAL
-// ═══════════════════════════════════════════════════════
-const submitModal=document.getElementById('submitModal');
-let pendingLapMs=null;
-
-// Session memory — persists for the browser tab's lifetime.
-// Stores { name, email } so returning top-3 laps skip the modal
-// and silently update the existing entry if faster.
-let sessionSubmission = null;
-try {
-  const saved = sessionStorage.getItem('tmcSubmission');
-  if(saved) {
-    sessionSubmission = JSON.parse(saved);
-    // Restore the change-info button if they already submitted this session
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('changeInfoWrap').style.display = 'block';
-    });
-  }
-} catch(e) {}
-
-async function upsertLeaderboardEntry(name, email, lapMs) {
-  // Re-read fresh from Firestore to avoid race conditions with other students
-  const fresh = await fbGet(LB_DOC);
-  lbEntries = fresh ? (fresh.entries||[]) : [];
-
-  // Always remove any existing entry for this email first — this prevents
-  // duplicates when name/email changes (edit mode) or faster times come in
-  const existingIdx = lbEntries.findIndex(e => e.email.toLowerCase() === email.toLowerCase());
-  let preserved = null;
-  if(existingIdx !== -1) {
-    // Only update if this lap is faster than their current entry
-    if(lapMs >= lbEntries[existingIdx].timeMs) return;
-    preserved = lbEntries[existingIdx]; // keep id and old ghost if no new one
-    lbEntries.splice(existingIdx, 1);
-  }
-
-  lbEntries.push({
-    id:             preserved ? preserved.id : Date.now(),
-    name, email,
-    time:           formatTime(lapMs),
-    timeMs:         lapMs,
-    textureDataUrl: carTextureDataUrl || (preserved ? preserved.textureDataUrl : null),
-    ghostFrames:    pendingGhostFrames.length > 0 ? pendingGhostFrames : (preserved ? preserved.ghostFrames : []),
-    approved:       false,   // always re-pending on any change
-    submittedAt:    new Date().toISOString(),
-  });
-
-  lbEntries.sort((a,b) => a.timeMs - b.timeMs);
-  if(lbEntries.length > MAX_ENTRIES) lbEntries = lbEntries.slice(0, MAX_ENTRIES);
-  await saveLeaderboard();
-  // Refresh local CR ghost in case this entry is now #1
-  refreshRecordGhostFromLeaderboard();
-}
-
-function openSubmitModal(lapMs, isEdit) {
-  pendingLapMs = lapMs;
-  const title = document.getElementById('submitTitle');
-  const desc  = document.getElementById('submitDesc');
-  if(isEdit) {
-    title.textContent = '✏️ Edit your info';
-    desc.textContent  = 'Update your name or email. Your entry will go back to pending approval.';
-  } else {
-    title.textContent = '🏆 Top 3 Lap!';
-    desc.textContent  = "You've set a top-3 time! Submit your score to the leaderboard. Your car texture will be shown pending approval.";
-  }
-  // Pre-fill with existing session data if available
-  document.getElementById('submitName').value  = sessionSubmission ? sessionSubmission.name  : '';
-  document.getElementById('submitEmail').value = sessionSubmission ? sessionSubmission.email : '';
-  document.getElementById('submitError').style.display = 'none';
-  document.getElementById('submitPreview').src = carTextureDataUrl||'placeholdercartexture.png';
-  submitModal.classList.remove('hidden');
-}
-
-function showSubmitModal(lapMs) {
-  pendingLapMs = lapMs;
-
-  // If the leaderboard is paused, show the "round closed" message instead
-  if(leaderboardPaused) {
-    document.getElementById('roundClosedTime').textContent = formatTime(lapMs);
-    roundClosedModal.classList.remove('hidden');
-    return;
-  }
-
-  // If they've already submitted this session, silently update — no modal needed
-  if(sessionSubmission) {
-    upsertLeaderboardEntry(sessionSubmission.name, sessionSubmission.email, lapMs);
-    return;
-  }
-
-  openSubmitModal(lapMs, false);
-}
-
-document.getElementById('submitCancel').addEventListener('click', ()=>submitModal.classList.add('hidden'));
-
-// ── Round Closed modal ────────────────────────────────
-const roundClosedModal = document.getElementById('roundClosedModal');
-document.getElementById('roundClosedOk').addEventListener('click', () => roundClosedModal.classList.add('hidden'));
-
-document.getElementById('changeInfoBtn').addEventListener('click', () => {
-  // Open modal in edit mode with their current info pre-filled.
-  // pendingLapMs stays null — on confirm we'll use bestLapMs instead.
-  openSubmitModal(null, true);
-});
-
-document.getElementById('submitConfirm').addEventListener('click', async ()=>{
-  const name  = document.getElementById('submitName').value.trim();
-  const email = document.getElementById('submitEmail').value.trim();
-  const emailErr = document.getElementById('submitError');
-  if(!name) {
-    emailErr.textContent = 'Please enter your name.';
-    emailErr.style.display='block'; return;
-  }
-  if(!email || !email.toLowerCase().endsWith('student.us')) {
-    emailErr.textContent = 'Email must be your school email ending in student.us.';
-    emailErr.style.display='block'; return;
-  }
-
-  const oldEmail = sessionSubmission ? sessionSubmission.email : null;
-
-  // Save to session so future top-3 laps skip the modal
-  sessionSubmission = { name, email };
-  try { sessionStorage.setItem('tmcSubmission', JSON.stringify(sessionSubmission)); } catch(e) {}
-
-  const lapToSubmit = pendingLapMs !== null ? pendingLapMs : bestLapMs;
-  if(lapToSubmit === null) { submitModal.classList.add('hidden'); return; }
-
-  // If the email changed, remove the old entry first so there's no duplicate
-  if(oldEmail && oldEmail.toLowerCase() !== email.toLowerCase()) {
-    const fresh = await fbGet(LB_DOC);
-    const entries = fresh ? (fresh.entries||[]) : [];
-    const filtered = entries.filter(e => e.email.toLowerCase() !== oldEmail.toLowerCase());
-    if(filtered.length !== entries.length) {
-      await fbSet(LB_DOC, { entries: filtered });
-    }
-    lbEntries = filtered;
-  }
-
-  await upsertLeaderboardEntry(name, email, lapToSubmit);
-  submitModal.classList.add('hidden');
-  document.getElementById('changeInfoWrap').style.display = 'block';
-});
-
-// ═══════════════════════════════════════════════════════
-// FIXED-TIMESTEP PHYSICS LOOP
-// ═══════════════════════════════════════════════════════
-// Physics always runs in fixed 1/60s steps regardless of framerate.
-// A 120fps device runs the render loop twice as often but physics
-// still advances by exactly one tick per 16.67ms of real time,
-// so lap times and car speed are identical on every device.
-// Ghost frames are recorded once per physics tick, so playback
-// is also framerate-independent.
-const PHYSICS_STEP = 1000 / 60;   // 16.667 ms
-let   physicsAccum  = 0;
-let   lastTime      = null;
-// Persistent render-interpolation state — updated once per tick inside the loop
-const prevRenderPos = new THREE.Vector3();
-let   prevRenderYaw = Math.PI / 2;
-// Captures the true physics position after all ticks, before we overwrite
-// carModel.position with the interpolated render position
-const postPhysicsPos = new THREE.Vector3();
-
-function physicsTick() {
-  // ── Acceleration & friction ────────────────────────
-  if(keys['w'])      speed += acceleration;
-  else if(keys['s']) speed -= acceleration;
-  else {
-    if(speed >  friction) speed -= friction;
-    else if(speed < -friction) speed += friction;
-    else speed = 0;
-  }
-  speed = Math.max(-maxSpeed, Math.min(maxSpeed, speed));
-
-  const isDrifting  = keys[' '] && Math.abs(speed) > maxSpeed * 0.3;
-  const speedFactor = Math.min(Math.abs(speed) / maxSpeed, 1);
-  const turnDir     = speed < 0 ? -1 : 1;
-  // At low speed: full BASE_TURN. At full speed without drift: reduced by TURN_SPEED_PENALTY.
-  // Drifting partially restores the lost turn radius via DRIFT_TURN_BOOST.
-  const speedPenalty   = 1 - speedFactor * (isDrifting ? TURN_SPEED_PENALTY * 0.4 : TURN_SPEED_PENALTY);
-  const effectiveTurn  = BASE_TURN * Math.max(0, speedPenalty) * (isDrifting ? DRIFT_TURN_BOOST : 1);
-  const si             = (keys['a'] ? 1 : 0) - (keys['d'] ? 1 : 0);
-  const steerTarget    = si * effectiveTurn * speedFactor * turnDir;
-  // While drifting with no steer input, decay steerRate very slowly so the
-  // car body holds its angle — release the turn key mid-drift and you keep curving.
-  const steerDecay = (si !== 0)
-    ? STEER_BUILDUP
-    : (isDrifting ? STEER_FALLOFF * 0.06 : STEER_FALLOFF);
-  steerRate += (steerTarget - steerRate) * steerDecay;
-  carYaw += steerRate;
-
-  // Derive quaternion from carYaw — never read back from carModel to avoid
-  // contamination from the render-interpolation slerp
-  const physicsQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, carYaw, 0, 'YXZ'));
-
-  const fd = new THREE.Vector3(0,0,-1).applyQuaternion(physicsQuat);
-  const fv = fd.clone().multiplyScalar(speed);
-
-  const rd = new THREE.Vector3(1,0,0).applyQuaternion(physicsQuat);
-
-  if(isDrifting) {
-    if(!wasDrifting) {
-      // ── Drift ENTRY (transition tick only) ───────────────────────────
-      // The car is going forward. We want it to continue going in that
-      // same world direction while the body starts rotating — creating the
-      // visible angle between facing and travel direction.
-      //
-      // Decompose the current total velocity into the car's facing frame.
-      // The sideways component becomes the starting lateralVel; forward
-      // component stays as speed. If the car was going perfectly straight,
-      // the decomposition gives a small lateral seed from steer input plus
-      // a kick proportional to speed — enough to start the slide visibly.
-      const totalVel = fd.clone().multiplyScalar(speed).add(lateralVel);
-      const forwardComp = totalVel.dot(fd);
-      const lateralComp = totalVel.dot(rd);
-
-      // Seed: carry existing lateral + steer-direction kick + speed-scaled push.
-      // If no steer input, only carry momentum already in the lateral direction —
-      // pressing drift while going straight should not push the car sideways.
-      const entrySeed = lateralComp + si * (DRIFT_BUILDUP + speedFactor * 0.12);
-      lateralVel.copy(rd).multiplyScalar(entrySeed);
-      speed = forwardComp;
-    } else {
-      // ── Mid-drift: steer gently rotates slide direction (counter-steer) ──
-      // Kept deliberately weak so it takes real effort to cancel the slide —
-      // you can steer the drift but can't accidentally zero it out.
-      const currentMag = lateralVel.length();
-      if(currentMag > 0.001) {
-        lateralVel.addScaledVector(rd, si * DRIFT_STEER_INFLUENCE * speedFactor);
-        // Clamp to original magnitude so steer rotates direction, doesn't add speed
-        lateralVel.setLength(currentMag);
-      }
-    }
-
-    // Very low grip — slide persists on momentum while spacebar held
-    lateralVel.multiplyScalar(1 - DRIFT_GRIP_SLIDE);
-
-    // Floor: while actively drifting at speed WITH a steer input, maintain a
-    // minimum slide so counter-steer never fully cancels the visible movement.
-    // No floor when going straight — pressing drift alone should not push sideways.
-    if(si !== 0) {
-      const minLateral = speedFactor * 0.04;
-      if(lateralVel.length() < minLateral && Math.abs(speed) > maxSpeed * 0.3) {
-        lateralVel.setLength(minLateral);
-      }
-    }
-
-    // Cap relative to speed so slide shrinks naturally as car slows
-    const ml = Math.abs(speed) * 0.92;
-    if(lateralVel.length() > ml) lateralVel.setLength(ml);
-
-    speed *= (1 - DRIFT_FRICTION);
-
-    // Stamp two skid marks at the rear left and right tyre positions
-    skidSpawnTick++;
-    if(skidSpawnTick >= SKID_SPAWN_EVERY) {
-      skidSpawnTick = 0;
-      const rearCenter = fd.clone().multiplyScalar(-1.6);
-      // Right vector from physicsQuat for lateral offset
-      const rightVec = new THREE.Vector3(1, 0, 0).applyQuaternion(physicsQuat);
-      const halfTrack = 0.72; // half the distance between the two rear tyres
-      // Left tyre
-      spawnSkid(
-        carModel.position.x + rearCenter.x - rightVec.x * halfTrack,
-        carModel.position.y,
-        carModel.position.z + rearCenter.z - rightVec.z * halfTrack,
-        carYaw
-      );
-      // Right tyre
-      spawnSkid(
-        carModel.position.x + rearCenter.x + rightVec.x * halfTrack,
-        carModel.position.y,
-        carModel.position.z + rearCenter.z + rightVec.z * halfTrack,
-        carYaw
-      );
-    }
-    wasDrifting = true;
-
-  } else {
-    wasDrifting = false;
-    // Natural cornering bleed through fast corners
-    if(si !== 0 && Math.abs(speed) > maxSpeed * 0.2) {
-      lateralVel.addScaledVector(rd, si * NATURAL_BLEED * speedFactor);
-    }
-    // Tyres grip up — lateral velocity bleeds back to zero
-    lateralVel.multiplyScalar(1 - DRIFT_GRIP);
-  }
-
-  const tv = fv.clone().add(lateralVel); tv.y = 0;
-  carModel.position.add(tv);
-
-  // Fade all active skid marks
-  tickSkids();
-
-  // Sync rotation to mesh before collision so raycasts use the correct orientation
-  carModel.rotation.y = carYaw;
-
-  updateEngineSound(speed, isDrifting);
-  updateDriftSound(isDrifting);
-  updateAabbObstacles(); resolveAabb(); resolveWallRaycasts();
-
-  // After wall collisions, rotation.y may have been nudged by the resolver —
-  // read it back into carYaw so we don't fight it next tick
-  carYaw = carModel.rotation.y;
-
-  // ── Ghost recording (one frame per physics tick) ───
-  if(lapStartTime !== null) {
-    currentLapGhostFrames.push({
-      px: carModel.position.x, py: carModel.position.y, pz: carModel.position.z,
-      ry: carYaw   // store yaw directly — simpler and no quaternion drift
-    });
-  }
-
-  // Ghost playback index advances once per physics tick (correct timing)
-  // but the actual mesh position is set in the render loop with interpolation.
-  if(ghostPBCheckbox.checked && pbGhostFrames.length > 0 && lapStartTime !== null) {
-    ghostPlaybackPBFrame = Math.min(ghostPlaybackPBFrame + 1, pbGhostFrames.length - 1);
-  }
-  if(ghostCRCheckbox.checked && crGhostFrames.length > 0 && lapStartTime !== null) {
-    ghostPlaybackCRFrame = Math.min(ghostPlaybackCRFrame + 1, crGhostFrames.length - 1);
-  }
-
-  // ── Lap timer & checkpoint ─────────────────────────
-  if(finishLineBox || checkpointBox) {
-    _carBox.setFromObject(carModel);
-    if(lapStartTime === null && finishLineBox && _carBox.intersectsBox(finishLineBox) && speed > 0) {
-      lapStartTime = performance.now(); hasLeftFinishLine = false; checkpointCleared = false;
-      currentLapGhostFrames = []; ghostPlaybackPBFrame = 0; ghostPlaybackCRFrame = 0;
-    }
-    if(lapStartTime !== null) {
-      if(!checkpointCleared && _carBox.intersectsBox(checkpointBox)) checkpointCleared = true;
-      if(finishLineBox && _carBox.intersectsBox(finishLineBox)) {
-        if(hasLeftFinishLine && checkpointCleared && speed > 0) {
-          const lapMs = performance.now() - lapStartTime;
-          if(bestLapMs === null || lapMs < bestLapMs) {
-            bestLapMs = lapMs; bestLapEl.textContent = formatTime(bestLapMs);
-            bestLapEl.style.color = '#7ef'; setTimeout(() => bestLapEl.style.color = '', 1500);
-            pbGhostFrames = currentLapGhostFrames.slice();
-          }
-          // Stash this lap's ghost frames so upsertLeaderboardEntry can save them
-          // alongside the entry — ghost is only stored if the player submits
-          pendingGhostFrames = currentLapGhostFrames.slice();
-          playSound('lap');
-          // Show modal (or silently update) only if this time is top-3
-          // AND better than their own existing entry
-          const qualifies = isTop3(lapMs) &&
-            (!sessionSubmission || isBetterThanOwn(sessionSubmission.email, lapMs));
-          if(qualifies) showSubmitModal(lapMs);
-          lapStartTime = performance.now(); hasLeftFinishLine = false; checkpointCleared = false;
-          currentLapGhostFrames = []; ghostPlaybackPBFrame = 0; ghostPlaybackCRFrame = 0;
-        }
-      } else { hasLeftFinishLine = true; }
-      updateLapTimer();
-    }
-  }
-
-  // ── Wheels ─────────────────────────────────────────
-  if(frontWheelPivot) {
-    let st = 0; if(keys['a']) st = maxWheelSteer; if(keys['d']) st = -maxWheelSteer;
-    if(isDrifting) st *= 1.5;
-    wheelSteer += (st - wheelSteer) * 0.15;
-    frontWheelPivot.rotation.y = wheelSteer;
-    _spinQ.setFromAxisAngle(_spinAxis, -speed * wheelSpinFactor);
-    frontWheelSpinner.quaternion.premultiply(_spinQ);
-  }
-  if(backWheelSpinner) {
-    _spinQ.setFromAxisAngle(_spinAxis, -speed * wheelSpinFactor);
-    backWheelSpinner.quaternion.premultiply(_spinQ);
-  }
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-
-  const now = performance.now();
-  if(lastTime === null) lastTime = now;
-  physicsAccum += Math.min(now - lastTime, 100);
-  lastTime = now;
-
-  if(carModel && !ghostsInitialized) {
-    ghostsInitialized = true;
-    initGhosts();
-    // CR ghost is loaded inside loadLeaderboard via refreshRecordGhostFromLeaderboard
-    loadLeaderboard();
-    loadSettings();
-  }
-
-  if(carModel && carTextureApplied) {
-    // Run all due physics ticks
-    while(physicsAccum >= PHYSICS_STEP) {
-      // Save state at the START of each tick — this becomes prevPos for
-      // the interpolation, always exactly one tick behind postPos.
-      // Storing it here (rather than before the loop) means we always
-      // interpolate across the LAST tick only, never a multi-tick gap.
-      prevRenderPos.copy(carModel.position);
-      prevRenderYaw = carYaw;
-
-      physicsTick();
-      physicsAccum -= PHYSICS_STEP;
-    }
-
-    // Save the true post-tick position before we overwrite it for rendering
-    postPhysicsPos.copy(carModel.position);
-
-    // alpha: fraction of one tick interval that has elapsed since the last tick.
-    // Interpolate between the state at the start of the last tick and now.
-    const alpha     = physicsAccum / PHYSICS_STEP;
-    const renderPos = prevRenderPos.clone().lerp(carModel.position, alpha);
-    const renderYaw = prevRenderYaw + (carYaw - prevRenderYaw) * alpha;
-
-    // Apply interpolated transform to mesh for this render frame
-    carModel.position.copy(renderPos);
-    carModel.rotation.set(0, renderYaw, 0, 'YXZ');
-
-    // Ghost playback — interpolate between the frame before and after the current tick
-    // using the same alpha as the car so ghosts stay in sync
-    if(pbGhostMesh) {
-      const show = ghostPBCheckbox.checked && pbGhostFrames.length > 0 && lapStartTime !== null;
-      pbGhostMesh.visible = show;
-      if(show) {
-        const fi  = Math.max(0, ghostPlaybackPBFrame - 1);
-        const fi2 = ghostPlaybackPBFrame;
-        const fa  = pbGhostFrames[fi], fb = pbGhostFrames[fi2];
-        pbGhostMesh.position.set(
-          fa.px + (fb.px - fa.px) * alpha,
-          fa.py + (fb.py - fa.py) * alpha,
-          fa.pz + (fb.pz - fa.pz) * alpha
-        );
-        pbGhostMesh.rotation.set(0,
-          fa.ry !== undefined
-            ? fa.ry + (fb.ry - fa.ry) * alpha
-            : Math.atan2(2*(fb.qw*fb.qy), 1-2*(fb.qy*fb.qy)), // fallback for old frames
-          0, 'YXZ');
-      }
-    }
-    if(crGhostMesh) {
-      const show = ghostCRCheckbox.checked && crGhostFrames.length > 0 && lapStartTime !== null;
-      crGhostMesh.visible = show;
-      if(show) {
-        const fi  = Math.max(0, ghostPlaybackCRFrame - 1);
-        const fi2 = ghostPlaybackCRFrame;
-        const fa  = crGhostFrames[fi], fb = crGhostFrames[fi2];
-        crGhostMesh.position.set(
-          fa.px + (fb.px - fa.px) * alpha,
-          fa.py + (fb.py - fa.py) * alpha,
-          fa.pz + (fb.pz - fa.pz) * alpha
-        );
-        crGhostMesh.rotation.set(0,
-          fa.ry !== undefined
-            ? fa.ry + (fb.ry - fa.ry) * alpha
-            : Math.atan2(2*(fb.qw*fb.qy), 1-2*(fb.qy*fb.qy)),
-          0, 'YXZ');
-      }
-    }
-
-    // Speedometer
-    const ns = Math.abs(speed) / maxSpeed;
-    document.getElementById('speedFill').style.width = (ns * 100) + '%';
-    document.getElementById('speedVal').textContent  = Math.round(ns * 120);
-
-    // Camera
-    smoothedCarPos.lerp(renderPos, 0.15);
-    const rot    = new THREE.Euler(pitch, yaw, 0, 'YXZ');
-    const carFacingQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, carYaw, 0, 'YXZ'));
-    const offset = baseOffset.clone().applyEuler(rot).applyQuaternion(carFacingQuat);
-    camera.position.lerp(smoothedCarPos.clone().add(offset), 0.12);
-    camera.lookAt(smoothedCarPos.clone().add(lookOffset));
-
-    renderer.render(scene, camera);
-
-    // Restore true physics position so the next frame's ticks start correctly
-    carModel.position.copy(postPhysicsPos);
-    carModel.rotation.set(0, carYaw, 0, 'YXZ');
-  } else {
-    renderer.render(scene, camera);
-  }
-}
-animate();
-
-// ═══════════════════════════════════════════════════════
-// RESIZE
-// ═══════════════════════════════════════════════════════
-window.addEventListener('resize',()=>{
-  camera.aspect=window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth,window.innerHeight);
-});
-
-// ═══════════════════════════════════════════════════════
-// TEXTURE UPLOADS
-// ═══════════════════════════════════════════════════════
-function captureCarThumbnail() {
-  // Render a single frame of the car at a 3/4 angle into a small offscreen canvas.
-  // We temporarily reposition the camera, render once, then restore everything.
-  // Cost: one extra render call, done only when the texture changes.
-  const THUMB = 128;
-
-  // Save current camera state
-  const savedPos   = camera.position.clone();
-  const savedQuat  = camera.quaternion.clone();
-  const savedAspect = camera.aspect;
-
-  // Hide ghosts and ground for the thumbnail so it's just the car
-  if (pbGhostMesh) pbGhostMesh.visible = false;
-  if (crGhostMesh) crGhostMesh.visible = false;
-  ground.visible = false;
-  scene.background = null;
-  const savedFog = scene.fog;
-  scene.fog = null;
-
-  // Position camera at a 3/4 angle: slightly above, front-right of the car
-  const carPos = carModel.position;
-  const thumbCam = new THREE.PerspectiveCamera(40, 1, 0.1, 1000);
-  const offset = new THREE.Vector3(3.5, 2.2, -3.8)
-    .applyQuaternion(carModel.quaternion)
-    .add(carPos);
-  thumbCam.position.copy(offset);
-  thumbCam.lookAt(carPos.clone().add(new THREE.Vector3(0, 0.5, 0)));
-
-  // Render into a small offscreen canvas via the existing renderer
-  renderer.setSize(THUMB, THUMB, false);
-  renderer.render(scene, thumbCam);
-
-  // Grab the pixels
-  const offscreen = document.createElement('canvas');
-  offscreen.width = offscreen.height = THUMB;
-  offscreen.getContext('2d').drawImage(renderer.domElement, 0, 0, THUMB, THUMB);
-  carTextureDataUrl = offscreen.toDataURL('image/jpeg', 0.82);
-
-  // Restore everything
-  renderer.setSize(window.innerWidth, window.innerHeight, false);
-  camera.position.copy(savedPos);
-  camera.quaternion.copy(savedQuat);
-  camera.aspect = savedAspect;
-  camera.updateProjectionMatrix();
-  ground.visible = true;
-  scene.background = scene._savedBackground || scene.background;
-  scene.fog = savedFog;
-  // Restore background (it was cleared for the thumb)
-  textureLoader.load('RMSField.png', (tex) => {
-    tex.mapping = THREE.EquirectangularReflectionMapping;
-    scene.background = tex;
-  });
-}
-
-function applyCarTexture(url) {
-  textureLoader.load(url, (tex) => {
-    applyTexture(carModel, tex);
-    if (!carTextureApplied) {
-      carTextureApplied = true;
-      lockOverlay.style.display = 'none';
-      initSound();
-    }
-    // Capture the 3/4 view thumbnail, then if they already have a leaderboard
-    // entry flip it back to pending since the texture has changed.
-    requestAnimationFrame(() => {
-      captureCarThumbnail();
-      // Give captureCarThumbnail one more frame to set carTextureDataUrl
-      requestAnimationFrame(async () => {
-        if(sessionSubmission && carTextureApplied) {
-          const fresh = await fbGet(LB_DOC);
-          const entries = fresh ? (fresh.entries || []) : [];
-          const idx = entries.findIndex(e =>
-            e.email.toLowerCase() === sessionSubmission.email.toLowerCase()
-          );
-          if(idx !== -1) {
-            entries[idx].approved       = false;
-            entries[idx].textureDataUrl = carTextureDataUrl || entries[idx].textureDataUrl;
-            // ghostFrames preserved — texture change doesn't invalidate the ghost
-            await fbSet(LB_DOC, { entries });
-          }
-        }
-      });
-    });
-  });
-}
-
-document.getElementById('carTextureUpload').addEventListener('change',(e)=>{
-  const url = URL.createObjectURL(e.target.files[0]);
-  if (!carModel) {
-    // Car GLB still loading — store the URL and apply once it's ready
-    pendingCarTextureUrl = url;
-  } else {
-    applyCarTexture(url);
-  }
-});
-document.getElementById('buildingTextureUpload').addEventListener('change',(e)=>{
-  if(!buildingModel) return;
-  textureLoader.load(URL.createObjectURL(e.target.files[0]),(t)=>applyTexture(buildingModel,t));
-});
-document.getElementById('skyboxUpload').addEventListener('change',(e)=>{
-  textureLoader.load(URL.createObjectURL(e.target.files[0]),(t)=>{
-    t.mapping=THREE.EquirectangularReflectionMapping; scene.background=t;
-  });
-});
-document.getElementById('groundUpload').addEventListener('change',(e)=>{
-  textureLoader.load(URL.createObjectURL(e.target.files[0]),(t)=>{
-    t.wrapS=THREE.RepeatWrapping; t.wrapT=THREE.RepeatWrapping; t.repeat.set(300,300);
-    groundMaterial.map=t; groundMaterial.needsUpdate=true;
-  });
-});
-
-// ═══════════════════════════════════════════════════════
-// COLOR CONTROLS
-// ═══════════════════════════════════════════════════════
-document.getElementById('ambientColor').addEventListener('input',(e)=>ambientLight.color.set(e.target.value));
-document.getElementById('lightColor').addEventListener('input',(e)=>directionalLight.color.set(e.target.value));
-document.getElementById('fogColor').addEventListener('input',(e)=>{
-  scene.fog.color.set(e.target.value); renderer.setClearColor(e.target.value);
-});
-
-// ═══════════════════════════════════════════════════════
-// QoL BUTTONS
-// ═══════════════════════════════════════════════════════
-document.getElementById('resetBtn').addEventListener('click',resetCar);
-
-// Mute toggle — connects/disconnects the AudioContext destination
-let isMuted = false;
-const muteGain = audioCtx.createGain();
-// Route everything through muteGain → destination
-// We do this by inserting it as the final node; existing nodes already
-// connect to audioCtx.destination so we patch by suspending the context.
-document.getElementById('muteBtn').addEventListener('click', () => {
-  isMuted = !isMuted;
-  if(isMuted) {
-    audioCtx.suspend();
-  } else {
-    audioCtx.resume();
-  }
-  document.getElementById('muteIcon').textContent = isMuted ? '🔇' : '🔊';
-});
-document.getElementById('fullscreenBtn').addEventListener('click',()=>{
-  if(!document.fullscreenElement) document.documentElement.requestFullscreen();
-  else document.exitFullscreen();
-});
-document.getElementById('screenshotBtn').addEventListener('click',()=>{
-  renderer.render(scene,camera);
-  const gl=renderer.domElement;
-  const comp=document.createElement('canvas'); comp.width=gl.width; comp.height=gl.height;
-  const ctx=comp.getContext('2d'); ctx.drawImage(gl,0,0);
-  const w=gl.width, bt=bestLapMs!==null?`Best Lap  ${formatTime(bestLapMs)}`:'Best Lap  --:--.---';
-  const pad=Math.round(w*0.018), fs=Math.round(w*0.022), lh=fs+Math.round(fs*0.5), bp=Math.round(fs*0.55);
-  ctx.font=`bold ${fs}px Arial,sans-serif`; ctx.textBaseline='top';
-  const tw=ctx.measureText(bt).width, bw=tw+bp*2, bh=lh+bp*1.2, r=Math.round(bh*0.35);
-  ctx.fillStyle='rgba(0,0,0,0.55)';
-  ctx.beginPath();
-  ctx.moveTo(pad+r,pad); ctx.lineTo(pad+bw-r,pad);
-  ctx.quadraticCurveTo(pad+bw,pad,pad+bw,pad+r); ctx.lineTo(pad+bw,pad+bh-r);
-  ctx.quadraticCurveTo(pad+bw,pad+bh,pad+bw-r,pad+bh); ctx.lineTo(pad+r,pad+bh);
-  ctx.quadraticCurveTo(pad,pad+bh,pad,pad+bh-r); ctx.lineTo(pad,pad+r);
-  ctx.quadraticCurveTo(pad,pad,pad+r,pad); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1.5; ctx.stroke();
-  ctx.shadowColor='rgba(0,0,0,0.8)'; ctx.shadowBlur=6; ctx.shadowOffsetX=1; ctx.shadowOffsetY=1;
-  ctx.fillStyle='#fff'; ctx.fillText(bt,pad+bp,pad+bp*0.6);
-  ctx.shadowColor='transparent'; ctx.shadowBlur=0;
-  const lnk=document.createElement('a'); lnk.download='screenshot.png'; lnk.href=comp.toDataURL('image/png'); lnk.click();
-});
-</script>
 </body>
 </html>
