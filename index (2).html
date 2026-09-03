@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Art Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #E4E7EA;
+    --paper-line: #C7CCD1;
+    --ink: #1C2226;
+    --pencil: #545C63;
+    --orange: #E0632A;
+    --orange-dim: #C2531F;
+    --cyan: #1B8FA6;
+    --cyan-dim: #14707F;
+    --shadow: rgba(28,34,38,0.22);
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; min-height:100vh;
+    background: var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 34px, var(--paper-line) 35px);
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .wrap{
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 36px 24px 80px;
+  }
+  a{ color: inherit; }
+  :focus-visible{ outline: 3px solid var(--orange); outline-offset: 2px; }
+
+  header{
+    text-align:center;
+    margin-bottom: 30px;
+    border-bottom: 3px solid var(--ink);
+    padding-bottom: 20px;
+  }
+  h1{
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(2.4rem, 7vw, 3.6rem);
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    margin: 0 0 6px;
+  }
+  .sub{
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--pencil);
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  /* ── Welcome note (pinned card) ─────────────────────────
+     Edit the text inside #welcomeNote to change what shows
+     on the homepage. Plain text and basic tags (<p>, <br>,
+     <strong>, <em>) all work fine here. */
+  .note-card{
+    position:relative;
+    background:#fff;
+    border: 2.5px solid var(--ink);
+    padding: 30px 32px;
+    margin-top: 32px;
+    box-shadow: 6px 6px 0 var(--shadow);
+  }
+  .pin{
+    position:absolute; top:-3px; left:-3px; right:-3px;
+    height: 6px;
+    background: var(--ink);
+  }
+  .note-label{
+    font-family:'JetBrains Mono', monospace; font-size:0.75rem; text-transform:uppercase;
+    letter-spacing: 0.12em; color: var(--pencil); margin-bottom: 12px;
+  }
+  #welcomeNote{
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+  #welcomeNote p{ margin: 0 0 12px; }
+  #welcomeNote p:last-child{ margin-bottom: 0; }
+
+  /* ── Tool cards ─────────────────────────────────────── */
+  .tools{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin-top: 34px;
+  }
+  @media (max-width: 640px){
+    .tools{ grid-template-columns: 1fr; }
+  }
+  .tool-card{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    background:#fff;
+    border: 2.5px solid var(--ink);
+    padding: 26px 24px 24px;
+    text-decoration:none;
+    box-shadow: 6px 6px 0 var(--shadow);
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .tool-card:hover, .tool-card:focus-visible{
+    transform: translate(-2px,-2px);
+    box-shadow: 8px 8px 0 var(--shadow);
+  }
+  .tool-card:active{
+    transform: translate(1px,1px);
+    box-shadow: 3px 3px 0 var(--shadow);
+  }
+  .tool-card.cyan{ border-left: 6px solid var(--cyan); }
+  .tool-card.orange{ border-left: 6px solid var(--orange); }
+
+  .tool-icon{ width: 52px; height: 52px; margin-bottom: 16px; }
+  .tool-icon svg{ width:100%; height:100%; display:block; }
+
+  .tool-title{
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+    color: var(--ink);
+  }
+  .tool-desc{
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--pencil);
+    margin: 0 0 18px;
+    flex-grow: 1;
+  }
+  .tool-open{
+    font-family:'JetBrains Mono', monospace; font-weight:600; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    align-self:flex-start;
+    border: 2px solid var(--ink);
+    padding: 8px 14px;
+  }
+  .tool-card.cyan .tool-open{ background: var(--cyan); color:#fff; border-color: var(--cyan); }
+  .tool-card.orange .tool-open{ background: var(--orange); color:#fff; border-color: var(--orange); }
+
+  footer{
+    text-align:center; margin-top: 48px; font-family:'JetBrains Mono', monospace;
+    color: var(--pencil); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>The Art Room</h1>
+    <p class="sub">Tools built for class — pick one to get started</p>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════
+       WELCOME NOTE — edit the text below to change the
+       homepage message. Nothing else on this page needs to
+       change; just rewrite the sentences inside the <p> tags,
+       or add/remove <p> paragraphs.
+       ══════════════════════════════════════════════════════ -->
+  <div class="note-card">
+    <div class="pin" aria-hidden="true"></div>
+    <div class="note-label">Welcome</div>
+    <div id="welcomeNote">
+      <p>Hi! This page collects the tools we use in class, all in one place. No logins, nothing to install — just pick a tool below and it'll open right in your browser.</p>
+      <p>New tools will show up here as they're built, so check back if you're looking for something new.</p>
+    </div>
+  </div>
+  <!-- ══════════════════════════════════════════════════ -->
+
+  <div class="tools">
+    <a class="tool-card cyan" href="texturemap.html">
+      <div class="tool-icon" aria-hidden="true">
+        <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 20 L14 40 Q14 46 26 46 Q38 46 38 40 L38 20" stroke="#1C2226" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <ellipse cx="26" cy="20" rx="12" ry="5" stroke="#1C2226" stroke-width="2.5"/>
+          <path d="M38 24 Q47 24 47 31 Q47 38 39 37" stroke="#1C2226" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M17 22 Q26 26 35 22" stroke="#1B8FA6" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="tool-title">Texture Map Cup</h2>
+      <p class="tool-desc">Upload your own texture, drop it onto a 3D car, and drive it around the track to see how it wraps. A hands-on way to understand UV mapping.</p>
+      <span class="tool-open">Open tool →</span>
+    </a>
+
+    <a class="tool-card orange" href="twisted.html">
+      <div class="tool-icon" aria-hidden="true">
+        <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="26" cy="26" r="19" stroke="#1C2226" stroke-width="2.5"/>
+          <path d="M26 15 L26 26 L34 31" stroke="#1C2226" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M26 7 L26 11 M8 26 L4 26 M26 45 L26 41" stroke="#E0632A" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="tool-title">Twisted Art</h2>
+      <p class="tool-desc">A timed drawing game. Start from a prompt, and when the clock runs out a new twist gets added to keep your piece evolving.</p>
+      <span class="tool-open">Open tool →</span>
+    </a>
+  </div>
+
+  <footer>Made for the art room</footer>
+</div>
+</body>
+</html>
