@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Leaderboard Admin — Texture Map<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Leaderboard Admin — Texture Map Cup</title>
+<style>
+  :root {
+    --bg:       #0f1117;
+    --surface:  #1a1d27;
+    --border:   #2a2d3a;
+    --text:     #e8eaf0;
+    --muted:    #6b7080;
+    --gold:     #f5c842;
+    --silver:   #b0b8c8;
+    --bronze:   #c87f3e;
+    --blue:     #4a90d9;
+    --green:    #3db87a;
+    --red:      #d94a4a;
+    --pending:  #e0a030;
+    --approved: #3db87a;
+    --radius:   10px;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:Arial,sans-serif; min-height:100vh; }
+
+  /* ── AUTH ───────────────────────────────────────────── */
+  #authScreen {
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:20px;
+    background:radial-gradient(ellipse at 50% 40%,#1e2235 0%,#0f1117 70%);
+  }
+  #authScreen h1 { font-size:28px; font-weight:700; color:var(--gold); }
+  #authScreen p  { color:var(--muted); font-size:14px; }
+  #authBox {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:32px 36px; display:flex; flex-direction:column; gap:14px; width:320px;
+  }
+  #authBox input {
+    background:var(--bg); border:1px solid var(--border); border-radius:8px;
+    color:var(--text); font-size:15px; padding:10px 14px; outline:none;
+  }
+  #authBox input:focus { border-color:var(--blue); }
+  #authBox button {
+    background:var(--blue); color:#fff; border:none; border-radius:8px;
+    padding:11px; font-size:15px; font-weight:600; cursor:pointer;
+  }
+  #authBox button:hover { opacity:0.88; }
+  #authError { color:var(--red); font-size:13px; text-align:center; display:none; }
+
+  /* ── MAIN ───────────────────────────────────────────── */
+  #adminPanel { display:none; }
+  header {
+    background:var(--surface); border-bottom:1px solid var(--border);
+    padding:18px 36px; display:flex; align-items:center; gap:16px;
+  }
+  header h1 { font-size:20px; font-weight:700; color:var(--gold); flex:1; }
+  .subtitle  { font-size:13px; color:var(--muted); }
+  .header-btn {
+    background:var(--surface); border:1px solid var(--border); color:var(--text);
+    border-radius:7px; padding:7px 14px; font-size:13px; cursor:pointer;
+  }
+  .header-btn:hover { background:var(--border); }
+  .header-btn.danger { border-color:var(--red); color:var(--red); }
+  .header-btn.danger:hover { background:rgba(217,74,74,0.12); }
+
+  main { max-width:960px; margin:0 auto; padding:32px 24px; }
+
+  .stats-row { display:flex; gap:16px; margin-bottom:28px; }
+  .stat-card {
+    flex:1; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:16px 20px;
+  }
+  .stat-card .val { font-size:28px; font-weight:700; color:var(--gold); }
+  .stat-card .lbl { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-top:4px; }
+
+  .filter-row { display:flex; gap:10px; margin-bottom:18px; }
+  .filter-btn {
+    background:var(--surface); border:1px solid var(--border); color:var(--muted);
+    border-radius:20px; padding:6px 16px; font-size:13px; cursor:pointer;
+  }
+  .filter-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+
+  #entriesList { display:flex; flex-direction:column; gap:12px; }
+
+  .entry-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    display:flex; align-items:center; gap:16px; padding:14px 18px;
+  }
+  .entry-card.approved { border-left:3px solid var(--approved); }
+  .entry-card.pending  { border-left:3px solid var(--pending); }
+
+  .entry-rank { width:36px; text-align:center; font-size:18px; font-weight:700; flex-shrink:0; }
+  .rank-1 { color:var(--gold); } .rank-2 { color:var(--silver); }
+  .rank-3 { color:var(--bronze); } .rank-other { color:var(--muted); font-size:14px; }
+
+  .entry-car {
+    width:56px; height:56px; object-fit:cover; border-radius:6px;
+    background:var(--bg); border:1px solid var(--border); flex-shrink:0;
+    cursor:pointer; transition:transform .15s;
+  }
+  .entry-car:hover { transform:scale(1.08); }
+
+  .entry-info { flex:1; min-width:0; }
+  .entry-name { font-size:16px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .entry-meta { font-size:12px; color:var(--muted); margin-top:3px; }
+  .entry-email { font-size:12px; color:var(--blue); margin-top:2px; }
+
+  .entry-time { font-size:20px; color:#7ef; flex-shrink:0; width:100px; text-align:right; }
+
+  .entry-status { font-size:11px; font-weight:600; text-transform:uppercase;
+    letter-spacing:.08em; padding:3px 9px; border-radius:20px; flex-shrink:0; }
+  .status-pending  { background:rgba(224,160,48,.15); color:var(--pending); }
+  .status-approved { background:rgba(61,184,122,.15); color:var(--approved); }
+
+  .entry-actions { display:flex; gap:8px; flex-shrink:0; }
+  .act-btn {
+    border:1px solid var(--border); border-radius:7px; padding:7px 14px;
+    font-size:13px; cursor:pointer; font-weight:500; background:transparent;
+  }
+  .act-approve { border-color:var(--green); color:var(--green); }
+  .act-approve:hover { background:rgba(61,184,122,.15); }
+  .act-delete  { border-color:var(--red); color:var(--red); }
+  .act-delete:hover { background:rgba(217,74,74,.12); }
+
+  .empty-state { text-align:center; color:var(--muted); padding:48px 0; font-size:15px; }
+  .empty-state .icon { font-size:40px; margin-bottom:12px; }
+
+  /* ── ROUND SETTINGS ─────────────────────────────────── */
+  .round-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:20px 24px; margin-bottom:28px;
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+  }
+  .round-card .round-label {
+    flex:1; min-width:180px;
+  }
+  .round-card .round-label h2 {
+    font-size:15px; font-weight:700; color:var(--text); margin-bottom:4px;
+  }
+  .round-card .round-label p {
+    font-size:13px; color:var(--muted); line-height:1.5;
+  }
+  .round-status-badge {
+    font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+    padding:4px 12px; border-radius:20px; flex-shrink:0;
+  }
+  .round-status-badge.open   { background:rgba(61,184,122,.15); color:var(--green); }
+  .round-status-badge.paused { background:rgba(224,160,48,.15);  color:var(--pending); }
+  .round-actions { display:flex; gap:10px; flex-shrink:0; flex-wrap:wrap; }
+  .btn-pause  { background:var(--pending); color:#111; border:none; border-radius:8px; padding:9px 20px; font-size:14px; font-weight:700; cursor:pointer; }
+  .btn-pause:hover { opacity:.88; }
+  .btn-resume { background:var(--green); color:#111; border:none; border-radius:8px; padding:9px 20px; font-size:14px; font-weight:700; cursor:pointer; }
+  .btn-resume:hover { opacity:.88; }
+  .btn-reset  { background:transparent; border:1px solid var(--red); color:var(--red); border-radius:8px; padding:9px 20px; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn-reset:hover { background:rgba(217,74,74,.12); }
+
+  /* ── LIGHTBOX ───────────────────────────────────────── */
+  #lightbox {
+    position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:200;
+    align-items:center; justify-content:center; cursor:zoom-out; display:none;
+  }
+  #lightbox img { max-width:80vw; max-height:80vh; border-radius:10px; }
+
+  /* ── CONFIRM ────────────────────────────────────────── */
+  #confirmDialog {
+    position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:300;
+    align-items:center; justify-content:center; display:none;
+  }
+  .confirm-box {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:28px 32px; max-width:360px; width:90%;
+  }
+  .confirm-box h3 { font-size:18px; margin-bottom:10px; }
+  .confirm-box p  { font-size:14px; color:var(--muted); line-height:1.5; margin-bottom:20px; }
+  .confirm-btns   { display:flex; gap:10px; }
+  .confirm-btns button {
+    flex:1; padding:10px; border-radius:8px; font-size:14px;
+    font-weight:600; cursor:pointer; border:none;
+  }
+  .confirm-cancel  { background:var(--border); color:var(--text); }
+  .confirm-proceed { background:var(--red); color:#fff; }
+</style>
+</head>
+<body>
+
+<div id="authScreen">
+  <h1>🏁 Texture Map Cup</h1>
+  <p>Leaderboard Administration</p>
+  <div id="authBox">
+    <input type="password" id="pwInput" placeholder="Admin password">
+    <div id="authError">Incorrect password.</div>
+    <button id="loginBtn">Sign In</button>
+  </div>
+</div>
+
+<div id="adminPanel">
+  <header>
+    <h1>🏁 Leaderboard Admin</h1>
+    <span class="subtitle" id="headerStats"></span>
+    <button class="header-btn" id="refreshBtn">↺ Refresh</button>
+    <button class="header-btn danger" id="clearAllBtn">✕ Clear All</button>
+  </header>
+  <main>
+    <!-- ── ROUND SETTINGS ─────────────────────────────── -->
+    <div class="round-card" id="roundCard">
+      <div class="round-label">
+        <h2>🏆 Round / Season Control</h2>
+        <p id="roundDesc">The leaderboard is currently <strong>open</strong>. New top-3 times will be accepted.</p>
+      </div>
+      <span class="round-status-badge open" id="roundBadge">Open</span>
+      <div class="round-actions">
+        <button class="btn-pause"  id="pauseBtn">⏸ Pause Round</button>
+        <button class="btn-reset"  id="resetRoundBtn">↺ Reset Round</button>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="val" id="statTotal">0</div><div class="lbl">Total Entries</div></div>
+      <div class="stat-card"><div class="val" id="statPending">0</div><div class="lbl">Pending Approval</div></div>
+      <div class="stat-card"><div class="val" id="statApproved">0</div><div class="lbl">Approved</div></div>
+      <div class="stat-card"><div class="val" id="statBest">—</div><div class="lbl">Top Record</div></div>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="pending">Pending</button>
+      <button class="filter-btn" data-filter="approved">Approved</button>
+    </div>
+    <div id="entriesList"></div>
+  </main>
+</div>
+
+<div id="lightbox"><img id="lightboxImg" src="" alt="Car texture"></div>
+
+<div id="confirmDialog">
+  <div class="confirm-box">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p  id="confirmMsg"></p>
+    <div class="confirm-btns">
+      <button class="confirm-cancel"  id="confirmCancel">Cancel</button>
+      <button class="confirm-proceed" id="confirmProceed">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp }                               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc,
+         onSnapshot }                                  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const ADMIN_PASSWORD = 'rmsadmin';
+const MAX_ENTRIES    = 10;
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyBbqvk4u7vaqKg_55hlmF5n77r3NBaLPAc",
+  authDomain:        "texturemapcup.firebaseapp.com",
+  projectId:         "texturemapcup",
+  storageBucket:     "texturemapcup.firebasestorage.app",
+  messagingSenderId: "105226943934",
+  appId:             "1:105226943934:web:134635bc280de5e2174def"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db    = getFirestore(fbApp);
+const LB_DOC = doc(db,'leaderboard','data');
+const CR_DOC = doc(db,'leaderboard','classRecordGhost');
+const ST_DOC = doc(db,'leaderboard','settings');   // pause state
+
+// ── Settings helpers ──────────────────────────────────
+let roundPaused = false;
+
+async function loadSettings() {
+  const d = await fbGet(ST_DOC);
+  roundPaused = d ? !!d.paused : false;
+  renderRoundCard();
+}
+
+async function saveSettings() {
+  await fbSet(ST_DOC, { paused: roundPaused });
+}
+
+function renderRoundCard() {
+  const badge  = document.getElementById('roundBadge');
+  const desc   = document.getElementById('roundDesc');
+  const pauseB = document.getElementById('pauseBtn');
+  if(roundPaused) {
+    badge.textContent = 'Paused';
+    badge.className   = 'round-status-badge paused';
+    desc.innerHTML    = 'The leaderboard is <strong>paused</strong>. Players who set a top-3 time will see a "Round Closed" message instead of the submission form.';
+    pauseB.textContent = '▶ Resume Round';
+    pauseB.className   = 'btn-resume';
+  } else {
+    badge.textContent = 'Open';
+    badge.className   = 'round-status-badge open';
+    desc.innerHTML    = 'The leaderboard is currently <strong>open</strong>. New top-3 times will be accepted.';
+    pauseB.textContent = '⏸ Pause Round';
+    pauseB.className   = 'btn-pause';
+  }
+}
+
+async function fbGet(ref) {
+  try { const s=await getDoc(ref); return s.exists()?s.data():null; }
+  catch(e){ console.error(e); return null; }
+}
+async function fbSet(ref,data) {
+  try { await setDoc(ref,data); } catch(e){ console.error(e); }
+}
+async function fbDelete(ref) {
+  try { await deleteDoc(ref); } catch(e){ console.error(e); }
+}
+
+// ── Auth ──────────────────────────────────────────────
+function attemptLogin() {
+  if(document.getElementById('pwInput').value===ADMIN_PASSWORD){
+    document.getElementById('authScreen').style.display='none';
+    document.getElementById('adminPanel').style.display='block';
+    startListening();
+  } else {
+    document.getElementById('authError').style.display='block';
+    document.getElementById('pwInput').value='';
+  }
+}
+document.getElementById('loginBtn').addEventListener('click',attemptLogin);
+document.getElementById('pwInput').addEventListener('keydown',(e)=>{ if(e.key==='Enter') attemptLogin(); });
+
+// ── State ─────────────────────────────────────────────
+let entries=[], currentFilter='all', unsubscribe=null;
+
+function startListening() {
+  loadSettings();
+  // Live updates so admin sees new submissions without refreshing
+  unsubscribe = onSnapshot(LB_DOC,(snap)=>{
+    entries = snap.exists() ? (snap.data().entries||[]) : [];
+    renderAll();
+  });
+}
+
+// ── Pause / Reset buttons ─────────────────────────────
+document.getElementById('pauseBtn').addEventListener('click', async () => {
+  roundPaused = !roundPaused;
+  renderRoundCard();
+  await saveSettings();
+});
+
+document.getElementById('resetRoundBtn').addEventListener('click', () => {
+  pendingAction = { type: 'resetRound' };
+  document.getElementById('confirmTitle').textContent = 'Reset Round?';
+  document.getElementById('confirmMsg').textContent =
+    'This will permanently delete ALL leaderboard entries and the top record ghost, and re-open the leaderboard for a new round. This cannot be undone.';
+  document.getElementById('confirmProceed').textContent = 'Reset Round';
+  document.getElementById('confirmDialog').style.display = 'flex';
+});
+
+async function saveEntries() { await fbSet(LB_DOC,{entries}); }
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Render ────────────────────────────────────────────
+function renderAll(){ renderStats(); renderList(); }
+
+function renderStats(){
+  const total=entries.length, pend=entries.filter(e=>!e.approved).length,
+        appr=entries.filter(e=>e.approved).length, best=entries.length?entries[0].time:'—';
+  document.getElementById('statTotal').textContent=total;
+  document.getElementById('statPending').textContent=pend;
+  document.getElementById('statApproved').textContent=appr;
+  document.getElementById('statBest').textContent=best;
+  document.getElementById('headerStats').textContent=`${total} entries · ${pend} pending`;
+}
+
+function renderList(){
+  const list=document.getElementById('entriesList'); list.innerHTML='';
+  let filtered=entries;
+  if(currentFilter==='pending')  filtered=entries.filter(e=>!e.approved);
+  if(currentFilter==='approved') filtered=entries.filter(e=> e.approved);
+  if(!filtered.length){
+    list.innerHTML='<div class="empty-state"><div class="icon">🏁</div>No entries found.</div>'; return;
+  }
+  filtered.forEach(entry=>{
+    const rank=entries.indexOf(entry)+1;
+    const rc=rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-other';
+    const imgSrc=entry.textureDataUrl||'placeholdercartexture.png';
+    const sub=new Date(entry.submittedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const card=document.createElement('div');
+    card.className=`entry-card ${entry.approved?'approved':'pending'}`;
+    card.innerHTML=`
+      <div class="entry-rank ${rc}">${rank}</div>
+      <img class="entry-car" src="${imgSrc}" data-src="${imgSrc}" alt="Car">
+      <div class="entry-info">
+        <div class="entry-name">${esc(entry.name)}</div>
+        <div class="entry-email">${esc(entry.email)}</div>
+        <div class="entry-meta">Submitted ${sub}</div>
+      </div>
+      <div class="entry-time">${entry.time}</div>
+      <div class="entry-status ${entry.approved?'status-approved':'status-pending'}">
+        ${entry.approved?'Approved':'Pending'}
+      </div>
+      <div class="entry-actions">
+        <button class="act-btn act-approve" ${entry.approved?'disabled style="opacity:.4;cursor:default;"':''} data-id="${entry.id}">✓ Approve</button>
+        <button class="act-btn act-delete" data-id="${entry.id}">✕ Delete</button>
+      </div>`;
+    card.querySelector('.entry-car').addEventListener('click',(e)=>openLightbox(e.target.dataset.src));
+    const ab=card.querySelector('.act-approve:not([disabled])');
+    if(ab) ab.addEventListener('click',()=>approveEntry(entry.id));
+    card.querySelector('.act-delete').addEventListener('click',()=>confirmDelete(entry.id,entry.name,rank));
+    list.appendChild(card);
+  });
+}
+
+// ── Actions ───────────────────────────────────────────
+async function approveEntry(id){
+  const e=entries.find(e=>e.id===id); if(!e) return;
+  e.approved=true; await saveEntries();
+}
+async function deleteEntry(id){
+  entries=entries.filter(e=>e.id!==id);
+  if(entries.length>MAX_ENTRIES) entries=entries.slice(0,MAX_ENTRIES);
+  await saveEntries();
+}
+
+// ── Confirm dialog ────────────────────────────────────
+let pendingAction=null;
+function confirmDelete(id,name,rank){
+  pendingAction={type:'delete',id};
+  document.getElementById('confirmTitle').textContent='Delete Entry?';
+  const rs=rank<=3?`This is currently rank #${rank}. `:'';
+  document.getElementById('confirmMsg').textContent=`${rs}Deleting "${name}" will remove them from the leaderboard. The next best entry will move up.`;
+  document.getElementById('confirmProceed').textContent='Delete';
+  document.getElementById('confirmDialog').style.display='flex';
+}
+document.getElementById('confirmCancel').addEventListener('click',()=>{
+  document.getElementById('confirmDialog').style.display='none'; pendingAction=null;
+});
+document.getElementById('confirmProceed').addEventListener('click',async()=>{
+  document.getElementById('confirmDialog').style.display='none';
+  if(!pendingAction) return;
+  if(pendingAction.type==='delete') await deleteEntry(pendingAction.id);
+  if(pendingAction.type==='clearAll'){
+    entries=[]; await saveEntries(); await fbDelete(CR_DOC);
+  }
+  if(pendingAction.type==='resetRound'){
+    entries=[]; await saveEntries(); await fbDelete(CR_DOC);
+    roundPaused=false; await saveSettings(); renderRoundCard();
+  }
+  pendingAction=null;
+});
+
+// ── Lightbox ──────────────────────────────────────────
+function openLightbox(src){
+  document.getElementById('lightboxImg').src=src;
+  document.getElementById('lightbox').style.display='flex';
+}
+document.getElementById('lightbox').addEventListener('click',()=>document.getElementById('lightbox').style.display='none');
+
+// ── Filters ───────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); currentFilter=btn.dataset.filter; renderList();
+  });
+});
+
+// ── Header buttons ────────────────────────────────────
+document.getElementById('refreshBtn').addEventListener('click',()=>{
+  fbGet(LB_DOC).then(d=>{ entries=d?(d.entries||[]):[];renderAll(); });
+});
+document.getElementById('clearAllBtn').addEventListener('click',()=>{
+  pendingAction={type:'clearAll'};
+  document.getElementById('confirmTitle').textContent='Clear All Entries?';
+  document.getElementById('confirmMsg').textContent='This will permanently delete ALL leaderboard entries and the top record ghost. This cannot be undone.';
+  document.getElementById('confirmProceed').textContent='Clear All';
+  document.getElementById('confirmDialog').style.display='flex';
+});
+</script>
+</body>
+</html>
+ Cup</title>
+<style>
+  :root {
+    --bg:       #0f1117;
+    --surface:  #1a1d27;
+    --border:   #2a2d3a;
+    --text:     #e8eaf0;
+    --muted:    #6b7080;
+    --gold:     #f5c842;
+    --silver:   #b0b8c8;
+    --bronze:   #c87f3e;
+    --blue:     #4a90d9;
+    --green:    #3db87a;
+    --red:      #d94a4a;
+    --pending:  #e0a030;
+    --approved: #3db87a;
+    --radius:   10px;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:Arial,sans-serif; min-height:100vh; }
+
+  /* ── AUTH ───────────────────────────────────────────── */
+  #authScreen {
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:20px;
+    background:radial-gradient(ellipse at 50% 40%,#1e2235 0%,#0f1117 70%);
+  }
+  #authScreen h1 { font-size:28px; font-weight:700; color:var(--gold); }
+  #authScreen p  { color:var(--muted); font-size:14px; }
+  #authBox {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:32px 36px; display:flex; flex-direction:column; gap:14px; width:320px;
+  }
+  #authBox input {
+    background:var(--bg); border:1px solid var(--border); border-radius:8px;
+    color:var(--text); font-size:15px; padding:10px 14px; outline:none;
+  }
+  #authBox input:focus { border-color:var(--blue); }
+  #authBox button {
+    background:var(--blue); color:#fff; border:none; border-radius:8px;
+    padding:11px; font-size:15px; font-weight:600; cursor:pointer;
+  }
+  #authBox button:hover { opacity:0.88; }
+  #authError { color:var(--red); font-size:13px; text-align:center; display:none; }
+
+  /* ── MAIN ───────────────────────────────────────────── */
+  #adminPanel { display:none; }
+  header {
+    background:var(--surface); border-bottom:1px solid var(--border);
+    padding:18px 36px; display:flex; align-items:center; gap:16px;
+  }
+  header h1 { font-size:20px; font-weight:700; color:var(--gold); flex:1; }
+  .subtitle  { font-size:13px; color:var(--muted); }
+  .header-btn {
+    background:var(--surface); border:1px solid var(--border); color:var(--text);
+    border-radius:7px; padding:7px 14px; font-size:13px; cursor:pointer;
+  }
+  .header-btn:hover { background:var(--border); }
+  .header-btn.danger { border-color:var(--red); color:var(--red); }
+  .header-btn.danger:hover { background:rgba(217,74,74,0.12); }
+
+  main { max-width:960px; margin:0 auto; padding:32px 24px; }
+
+  .stats-row { display:flex; gap:16px; margin-bottom:28px; }
+  .stat-card {
+    flex:1; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:16px 20px;
+  }
+  .stat-card .val { font-size:28px; font-weight:700; color:var(--gold); }
+  .stat-card .lbl { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-top:4px; }
+
+  .filter-row { display:flex; gap:10px; margin-bottom:18px; }
+  .filter-btn {
+    background:var(--surface); border:1px solid var(--border); color:var(--muted);
+    border-radius:20px; padding:6px 16px; font-size:13px; cursor:pointer;
+  }
+  .filter-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+
+  #entriesList { display:flex; flex-direction:column; gap:12px; }
+
+  .entry-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    display:flex; align-items:center; gap:16px; padding:14px 18px;
+  }
+  .entry-card.approved { border-left:3px solid var(--approved); }
+  .entry-card.pending  { border-left:3px solid var(--pending); }
+
+  .entry-rank { width:36px; text-align:center; font-size:18px; font-weight:700; flex-shrink:0; }
+  .rank-1 { color:var(--gold); } .rank-2 { color:var(--silver); }
+  .rank-3 { color:var(--bronze); } .rank-other { color:var(--muted); font-size:14px; }
+
+  .entry-car {
+    width:56px; height:56px; object-fit:cover; border-radius:6px;
+    background:var(--bg); border:1px solid var(--border); flex-shrink:0;
+    cursor:pointer; transition:transform .15s;
+  }
+  .entry-car:hover { transform:scale(1.08); }
+
+  .entry-info { flex:1; min-width:0; }
+  .entry-name { font-size:16px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .entry-meta { font-size:12px; color:var(--muted); margin-top:3px; }
+  .entry-email { font-size:12px; color:var(--blue); margin-top:2px; }
+
+  .entry-time { font-size:20px; color:#7ef; flex-shrink:0; width:100px; text-align:right; }
+
+  .entry-status { font-size:11px; font-weight:600; text-transform:uppercase;
+    letter-spacing:.08em; padding:3px 9px; border-radius:20px; flex-shrink:0; }
+  .status-pending  { background:rgba(224,160,48,.15); color:var(--pending); }
+  .status-approved { background:rgba(61,184,122,.15); color:var(--approved); }
+
+  .entry-actions { display:flex; gap:8px; flex-shrink:0; }
+  .act-btn {
+    border:1px solid var(--border); border-radius:7px; padding:7px 14px;
+    font-size:13px; cursor:pointer; font-weight:500; background:transparent;
+  }
+  .act-approve { border-color:var(--green); color:var(--green); }
+  .act-approve:hover { background:rgba(61,184,122,.15); }
+  .act-delete  { border-color:var(--red); color:var(--red); }
+  .act-delete:hover { background:rgba(217,74,74,.12); }
+
+  .empty-state { text-align:center; color:var(--muted); padding:48px 0; font-size:15px; }
+  .empty-state .icon { font-size:40px; margin-bottom:12px; }
+
+  /* ── LIGHTBOX ───────────────────────────────────────── */
+  #lightbox {
+    position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:200;
+    align-items:center; justify-content:center; cursor:zoom-out; display:none;
+  }
+  #lightbox img { max-width:80vw; max-height:80vh; border-radius:10px; }
+
+  /* ── CONFIRM ────────────────────────────────────────── */
+  #confirmDialog {
+    position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:300;
+    align-items:center; justify-content:center; display:none;
+  }
+  .confirm-box {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:28px 32px; max-width:360px; width:90%;
+  }
+  .confirm-box h3 { font-size:18px; margin-bottom:10px; }
+  .confirm-box p  { font-size:14px; color:var(--muted); line-height:1.5; margin-bottom:20px; }
+  .confirm-btns   { display:flex; gap:10px; }
+  .confirm-btns button {
+    flex:1; padding:10px; border-radius:8px; font-size:14px;
+    font-weight:600; cursor:pointer; border:none;
+  }
+  .confirm-cancel  { background:var(--border); color:var(--text); }
+  .confirm-proceed { background:var(--red); color:#fff; }
+</style>
+</head>
+<body>
+
+<div id="authScreen">
+  <h1>🏁 Texture Map Cup</h1>
+  <p>Leaderboard Administration</p>
+  <div id="authBox">
+    <input type="password" id="pwInput" placeholder="Admin password">
+    <div id="authError">Incorrect password.</div>
+    <button id="loginBtn">Sign In</button>
+  </div>
+</div>
+
+<div id="adminPanel">
+  <header>
+    <h1>🏁 Leaderboard Admin</h1>
+    <span class="subtitle" id="headerStats"></span>
+    <button class="header-btn" id="refreshBtn">↺ Refresh</button>
+    <button class="header-btn danger" id="clearAllBtn">✕ Clear All</button>
+  </header>
+  <main>
+    <div class="stats-row">
+      <div class="stat-card"><div class="val" id="statTotal">0</div><div class="lbl">Total Entries</div></div>
+      <div class="stat-card"><div class="val" id="statPending">0</div><div class="lbl">Pending Approval</div></div>
+      <div class="stat-card"><div class="val" id="statApproved">0</div><div class="lbl">Approved</div></div>
+      <div class="stat-card"><div class="val" id="statBest">—</div><div class="lbl">Top Record</div></div>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="pending">Pending</button>
+      <button class="filter-btn" data-filter="approved">Approved</button>
+    </div>
+    <div id="entriesList"></div>
+  </main>
+</div>
+
+<div id="lightbox"><img id="lightboxImg" src="" alt="Car texture"></div>
+
+<div id="confirmDialog">
+  <div class="confirm-box">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p  id="confirmMsg"></p>
+    <div class="confirm-btns">
+      <button class="confirm-cancel"  id="confirmCancel">Cancel</button>
+      <button class="confirm-proceed" id="confirmProceed">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp }                               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc,
+         onSnapshot }                                  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const ADMIN_PASSWORD = 'rmsadmin';
+const MAX_ENTRIES    = 10;
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyBbqvk4u7vaqKg_55hlmF5n77r3NBaLPAc",
+  authDomain:        "texturemapcup.firebaseapp.com",
+  projectId:         "texturemapcup",
+  storageBucket:     "texturemapcup.firebasestorage.app",
+  messagingSenderId: "105226943934",
+  appId:             "1:105226943934:web:134635bc280de5e2174def"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db    = getFirestore(fbApp);
+const LB_DOC = doc(db,'leaderboard','data');
+const CR_DOC = doc(db,'leaderboard','classRecordGhost');
+
+async function fbGet(ref) {
+  try { const s=await getDoc(ref); return s.exists()?s.data():null; }
+  catch(e){ console.error(e); return null; }
+}
+async function fbSet(ref,data) {
+  try { await setDoc(ref,data); } catch(e){ console.error(e); }
+}
+async function fbDelete(ref) {
+  try { await deleteDoc(ref); } catch(e){ console.error(e); }
+}
+
+// ── Auth ──────────────────────────────────────────────
+function attemptLogin() {
+  if(document.getElementById('pwInput').value===ADMIN_PASSWORD){
+    document.getElementById('authScreen').style.display='none';
+    document.getElementById('adminPanel').style.display='block';
+    startListening();
+  } else {
+    document.getElementById('authError').style.display='block';
+    document.getElementById('pwInput').value='';
+  }
+}
+document.getElementById('loginBtn').addEventListener('click',attemptLogin);
+document.getElementById('pwInput').addEventListener('keydown',(e)=>{ if(e.key==='Enter') attemptLogin(); });
+
+// ── State ─────────────────────────────────────────────
+let entries=[], currentFilter='all', unsubscribe=null;
+
+function startListening() {
+  // Live updates so admin sees new submissions without refreshing
+  unsubscribe = onSnapshot(LB_DOC,(snap)=>{
+    entries = snap.exists() ? (snap.data().entries||[]) : [];
+    renderAll();
+  });
+}
+
+async function saveEntries() { await fbSet(LB_DOC,{entries}); }
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Render ────────────────────────────────────────────
+function renderAll(){ renderStats(); renderList(); }
+
+function renderStats(){
+  const total=entries.length, pend=entries.filter(e=>!e.approved).length,
+        appr=entries.filter(e=>e.approved).length, best=entries.length?entries[0].time:'—';
+  document.getElementById('statTotal').textContent=total;
+  document.getElementById('statPending').textContent=pend;
+  document.getElementById('statApproved').textContent=appr;
+  document.getElementById('statBest').textContent=best;
+  document.getElementById('headerStats').textContent=`${total} entries · ${pend} pending`;
+}
+
+function renderList(){
+  const list=document.getElementById('entriesList'); list.innerHTML='';
+  let filtered=entries;
+  if(currentFilter==='pending')  filtered=entries.filter(e=>!e.approved);
+  if(currentFilter==='approved') filtered=entries.filter(e=> e.approved);
+  if(!filtered.length){
+    list.innerHTML='<div class="empty-state"><div class="icon">🏁</div>No entries found.</div>'; return;
+  }
+  filtered.forEach(entry=>{
+    const rank=entries.indexOf(entry)+1;
+    const rc=rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-other';
+    const imgSrc=entry.textureDataUrl||'placeholdercartexture.png';
+    const sub=new Date(entry.submittedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const card=document.createElement('div');
+    card.className=`entry-card ${entry.approved?'approved':'pending'}`;
+    card.innerHTML=`
+      <div class="entry-rank ${rc}">${rank}</div>
+      <img class="entry-car" src="${imgSrc}" data-src="${imgSrc}" alt="Car">
+      <div class="entry-info">
+        <div class="entry-name">${esc(entry.name)}</div>
+        <div class="entry-email">${esc(entry.email)}</div>
+        <div class="entry-meta">Submitted ${sub}</div>
+      </div>
+      <div class="entry-time">${entry.time}</div>
+      <div class="entry-status ${entry.approved?'status-approved':'status-pending'}">
+        ${entry.approved?'Approved':'Pending'}
+      </div>
+      <div class="entry-actions">
+        <button class="act-btn act-approve" ${entry.approved?'disabled style="opacity:.4;cursor:default;"':''} data-id="${entry.id}">✓ Approve</button>
+        <button class="act-btn act-delete" data-id="${entry.id}">✕ Delete</button>
+      </div>`;
+    card.querySelector('.entry-car').addEventListener('click',(e)=>openLightbox(e.target.dataset.src));
+    const ab=card.querySelector('.act-approve:not([disabled])');
+    if(ab) ab.addEventListener('click',()=>approveEntry(entry.id));
+    card.querySelector('.act-delete').addEventListener('click',()=>confirmDelete(entry.id,entry.name,rank));
+    list.appendChild(card);
+  });
+}
+
+// ── Actions ───────────────────────────────────────────
+async function approveEntry(id){
+  const e=entries.find(e=>e.id===id); if(!e) return;
+  e.approved=true; await saveEntries();
+}
+async function deleteEntry(id){
+  entries=entries.filter(e=>e.id!==id);
+  if(entries.length>MAX_ENTRIES) entries=entries.slice(0,MAX_ENTRIES);
+  await saveEntries();
+}
+
+// ── Confirm dialog ────────────────────────────────────
+let pendingAction=null;
+function confirmDelete(id,name,rank){
+  pendingAction={type:'delete',id};
+  document.getElementById('confirmTitle').textContent='Delete Entry?';
+  const rs=rank<=3?`This is currently rank #${rank}. `:'';
+  document.getElementById('confirmMsg').textContent=`${rs}Deleting "${name}" will remove them from the leaderboard. The next best entry will move up.`;
+  document.getElementById('confirmProceed').textContent='Delete';
+  document.getElementById('confirmDialog').style.display='flex';
+}
+document.getElementById('confirmCancel').addEventListener('click',()=>{
+  document.getElementById('confirmDialog').style.display='none'; pendingAction=null;
+});
+document.getElementById('confirmProceed').addEventListener('click',async()=>{
+  document.getElementById('confirmDialog').style.display='none';
+  if(!pendingAction) return;
+  if(pendingAction.type==='delete') await deleteEntry(pendingAction.id);
+  if(pendingAction.type==='clearAll'){
+    entries=[]; await saveEntries(); await fbDelete(CR_DOC);
+  }
+  pendingAction=null;
+});
+
+// ── Lightbox ──────────────────────────────────────────
+function openLightbox(src){
+  document.getElementById('lightboxImg').src=src;
+  document.getElementById('lightbox').style.display='flex';
+}
+document.getElementById('lightbox').addEventListener('click',()=>document.getElementById('lightbox').style.display='none');
+
+// ── Filters ───────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); currentFilter=btn.dataset.filter; renderList();
+  });
+});
+
+// ── Header buttons ────────────────────────────────────
+document.getElementById('refreshBtn').addEventListener('click',()=>{
+  fbGet(LB_DOC).then(d=>{ entries=d?(d.entries||[]):[];renderAll(); });
+});
+document.getElementById('clearAllBtn').addEventListener('click',()=>{
+  pendingAction={type:'clearAll'};
+  document.getElementById('confirmTitle').textContent='Clear All Entries?';
+  document.getElementById('confirmMsg').textContent='This will permanently delete ALL leaderboard entries and the top record ghost. This cannot be undone.';
+  document.getElementById('confirmProceed').textContent='Clear All';
+  document.getElementById('confirmDialog').style.display='flex';
+});
+</script>
+</body>
+</html>
