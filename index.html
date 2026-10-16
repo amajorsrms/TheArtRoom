@@ -116,6 +116,7 @@
   }
   .tool-card.cyan{ border-left: 6px solid var(--cyan); }
   .tool-card.orange{ border-left: 6px solid var(--orange); }
+  .tool-card.ink{ border-left: 6px solid var(--ink); }
 
   .tool-icon{ width: 52px; height: 52px; margin-bottom: 16px; }
   .tool-icon svg{ width:100%; height:100%; display:block; }
@@ -144,6 +145,7 @@
   }
   .tool-card.cyan .tool-open{ background: var(--cyan); color:#fff; border-color: var(--cyan); }
   .tool-card.orange .tool-open{ background: var(--orange); color:#fff; border-color: var(--orange); }
+  .tool-card.ink .tool-open{ background: var(--ink); color:#fff; border-color: var(--ink); }
 
   footer{
     text-align:center; margin-top: 48px; font-family:'JetBrains Mono', monospace;
@@ -169,7 +171,7 @@
     <div class="pin" aria-hidden="true"></div>
     <div class="note-label">Welcome</div>
     <div id="welcomeNote">
-      <p>Hi! This page collects the tools we use in class, all in one place. No logins, nothing to install — just pick a tool below and it'll open right in your browser.</p>
+      <p>Hi! This page collects the tools we use in class, all in one place. Nothing to install — just pick a tool below and it'll open right in your browser. Art Commissions asks you to sign in with your school Google account.</p>
       <p>New tools will show up here as they're built, so check back if you're looking for something new.</p>
     </div>
   </div>
@@ -200,6 +202,20 @@
       </div>
       <h2 class="tool-title">Twisted Art</h2>
       <p class="tool-desc">A timed drawing game. Start from a prompt, and when the clock runs out a new twist gets added to keep your piece evolving.</p>
+      <span class="tool-open">Open tool →</span>
+    </a>
+
+    <!-- Replace PASTE_YOUR_WEB_APP_URL_HERE with your Apps Script web app URL (ends in /exec) -->
+    <a class="tool-card ink" href="PASTE_YOUR_WEB_APP_URL_HERE">
+      <div class="tool-icon" aria-hidden="true">
+        <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="9" y="8" width="34" height="36" rx="2" stroke="#1C2226" stroke-width="2.5"/>
+          <path d="M16 18 H36 M16 25 H30" stroke="#1C2226" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M33 38 L40 31 L44 35 L37 42 L32 43 Z" stroke="#E0632A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#fff"/>
+        </svg>
+      </div>
+      <h2 class="tool-title">Art Commissions</h2>
+      <p class="tool-desc">Request artwork from a classmate, or take on someone else's request and earn school currency. Everything stays anonymous and your teacher approves new requests first.</p>
       <span class="tool-open">Open tool →</span>
     </a>
   </div>
