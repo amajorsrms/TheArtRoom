@@ -122,9 +122,10 @@ $('cam').onclick=async()=>{msg('Starting camera…');
  try{vid.srcObject=await navigator.mediaDevices.getUserMedia({video:true});await vid.play();vid.style.display='block'}
  catch(e){msg('Camera blocked. Allow camera access in your browser, or try Demo motion.');return}
  try{msg('Loading the body-tracking model…');
+  for(const u of ['./vendor/vision_bundle.mjs','./vendor/wasm/vision_wasm_internal.wasm','./models/pose_landmarker_lite.task']){const r=await fetch(u,{method:'HEAD'}).catch(()=>null);if(!r||!r.ok)throw new Error('can’t find '+u.slice(2)+(r?' (error '+r.status+')':''))}
   const T=await import('./vendor/vision_bundle.mjs');
   const fs=await T.FilesetResolver.forVisionTasks('./vendor/wasm');
   lmk=await T.PoseLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:'./models/pose_landmarker_lite.task'},runningMode:'VIDEO'});
   demo=false;$('demo').classList.remove('on');tracking=true;cal=null;msg('Step back so your whole body is in view, then move!')}
- catch(e){msg('The tracking model couldn’t load. Demo motion still works. Try reloading the page.')}};
+ catch(e){console.error(e);msg('The tracking model couldn’t load: '+(e&&e.message||e)+'. Demo motion still works.')}};
 </script></body></html>
