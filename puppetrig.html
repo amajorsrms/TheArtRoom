@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Draw & Puppet</title>
+<style>
+:root{--bg:#f6f1e7;--fg:#2b2622;--card:#fffdf8;--line:#d9cfbd;--ac:#e2563b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1b19;--fg:#efe9df;--card:#2a2724;--line:#47423c;--ac:#ff7a5c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1d1b19;--fg:#efe9df;--card:#2a2724;--line:#47423c;--ac:#ff7a5c;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px}
+h1{font:600 20px Georgia,serif;margin:0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+button{font:inherit;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+#wrap{position:relative;width:min(100%,560px)}
+canvas#c{width:100%;aspect-ratio:1;background:repeating-conic-gradient(var(--line) 0 25%,var(--card) 0 50%) 0 0/20px 20px;border:1px solid var(--line);border-radius:10px;touch-action:none;display:block}
+video{position:absolute;right:8px;bottom:8px;width:110px;border-radius:6px;transform:scaleX(-1);opacity:.85;display:none}
+#msg{min-height:20px;text-align:center;max-width:560px;opacity:.85}
+.p{display:none}.p.show{display:flex}
+</style></head><body>
+<h1>Draw & Puppet</h1>
+<div class="row" id="steps"><button data-s="0" class="on">1 · Draw</button><button data-s="1">2 · Rig</button><button data-s="2">3 · Puppet</button></div>
+<div id="wrap"><canvas id="c" width="560" height="560"></canvas><video id="vid" playsinline muted></video></div>
+<div class="row p show" id="p0">
+ <input type="color" id="col" value="#2b2622"><input type="range" id="sz" min="2" max="40" value="8">
+ <button id="er">Eraser</button><button id="clr">Clear</button><button id="up">Upload paper drawing</button><input type="file" id="file" accept="image/*" hidden><span id="cutw" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center"><select id="mode"><option value="auto">Remove paper</option><option value="key">Remove a color</option></select><button id="pick" style="display:none">Pick color</button><label>Tolerance <input type="range" id="cut" min="5" max="120" value="40"></label><label><input type="checkbox" id="bgk"> Keep background color when puppeting</label></span></div>
+<div class="row p" id="p1"><button id="rst">Reset rig</button></div>
+<div class="row p" id="p2"><button id="cam">Start webcam</button><button id="demo">Demo motion</button><button id="cal">Recenter</button></div>
+<div id="msg">Draw a full-body character: head, torso, two arms, two legs. Keep limbs apart so they can move.</div>
+<script>
+const $=id=>document.getElementById(id),c=$('c'),x=c.getContext('2d'),S=560;
+const D=document.createElement('canvas');D.width=D.height=S;const d=D.getContext('2d');
+d.lineCap=d.lineJoin='round';
+const DEF={nose:[280,90],sL:[225,175],sR:[335,175],eL:[190,260],eR:[370,260],wL:[165,340],wR:[395,340],hL:[250,335],hR:[310,335],kL:[245,430],kR:[315,430],aL:[240,520],aR:[320,520]};
+let J=JSON.parse(JSON.stringify(DEF)),stage=0,erase=false,pen=null,drag=null,parts={},R={},A0={},L0={},P0,demo=false,tracking=false,cal=null,off=[0,0],V={},lmk=null,vid=$('vid');
+const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2],sub=(a,b)=>[a[0]-b[0],a[1]-b[1]],add=(a,v)=>[a[0]+v[0],a[1]+v[1]];
+const rot=(v,t)=>[v[0]*Math.cos(t)-v[1]*Math.sin(t),v[0]*Math.sin(t)+v[1]*Math.cos(t)];
+const pt=(P,k)=>k=='nk'?mid(P.sL,P.sR):k=='hp'?mid(P.hL,P.hR):P[k];
+const B=[['thL','hL','kL'],['shL','kL','aL'],['thR','hR','kR'],['shR','kR','aR'],['torso','hp','nk'],['uaL','sL','eL'],['faL','eL','wL'],['uaR','sR','eR'],['faR','eR','wR'],['head','nk','nose']];
+const msg=t=>$('msg').textContent=t;
+function setStage(s){stage=s;document.querySelectorAll('#steps button').forEach((b,i)=>b.classList.toggle('on',i==s));
+ [0,1,2].forEach(i=>$('p'+i).classList.toggle('show',i==s));
+ msg(['Draw a full-body character (or upload a photo of one on paper). Keep limbs apart so they can move.','Drag each dot onto the matching spot of your drawing: nose, shoulders, elbows, wrists, hips, knees, ankles. “L” and “R” are as you see them on screen.','Start your webcam and move: your character copies you. No camera? Try Demo motion.'][s]);
+ if(s==2)build();bg();}
+document.querySelectorAll('#steps button').forEach(b=>b.onclick=()=>setStage(+b.dataset.s));
+$('er').onclick=e=>{erase=!erase;e.target.classList.toggle('on',erase)};
+$('clr').onclick=()=>d.clearRect(0,0,S,S);
+$('rst').onclick=()=>J=JSON.parse(JSON.stringify(DEF));
+function pos(e){const r=c.getBoundingClientRect();return[(e.clientX-r.left)*S/r.width,(e.clientY-r.top)*S/r.height]}
+c.onpointerdown=e=>{const p=pos(e);c.setPointerCapture(e.pointerId);
+ if(stage==0&&picking){samp(p);return}
+ if(stage==0){pen=p;stroke(p,p)}
+ else if(stage==1){let best=22;drag=null;for(const k in J){const q=Math.hypot(J[k][0]-p[0],J[k][1]-p[1]);if(q<best){best=q;drag=k}}}};
+c.onpointermove=e=>{const p=pos(e);if(stage==0&&pen){stroke(pen,p);pen=p}else if(stage==1&&drag)J[drag]=p};
+c.onpointerup=()=>{pen=drag=null};
+function stroke(a,b){d.globalCompositeOperation=erase?'destination-out':'source-over';d.strokeStyle=$('col').value;d.lineWidth=$('sz').value*(erase?2:1);d.beginPath();d.moveTo(a[0],a[1]);d.lineTo(b[0],b[1]);d.stroke();d.globalCompositeOperation='source-over'}
+function dseg(p,a,b){const v=sub(b,a),w=sub(p,a),l=v[0]*v[0]+v[1]*v[1]||1;const t=Math.max(0,Math.min(1,(w[0]*v[0]+w[1]*v[1])/l));return Math.hypot(p[0]-a[0]-t*v[0],p[1]-a[1]-t*v[1])}
+let mesh=null,U=null,auto=null,K=null,key=false,picking=false;
+function build(){P0=JSON.parse(JSON.stringify(J));
+ for(const[n,a,b]of B){const s=pt(P0,a),e=pt(P0,b);R[n]={a:s,b:e};A0[n]=Math.atan2(e[1]-s[1],e[0]-s[0]);L0[n]=Math.hypot(e[0]-s[0],e[1]-s[1]);V[n]=[Math.cos(A0[n]),Math.sin(A0[n])]}
+ const src=d.getImageData(0,0,S,S).data,G=14,N=Math.ceil(S/G)+1,V0=[],W=[],T=[];
+ const has=(i,j)=>{for(let y=j*G;y<Math.min(S,(j+1)*G);y+=2)for(let q=i*G;q<Math.min(S,(i+1)*G);q+=2)if(src[(y*S+q)*4+3]>20)return true;return false};
+ for(let j=0;j<N;j++)for(let i=0;i<N;i++){const p=[i*G,j*G];
+  const ws=B.map(([n],k)=>[k,1/Math.pow(dseg(p,R[n].a,R[n].b)+6,3)]).sort((u,v)=>v[1]-u[1]).slice(0,3),t=ws.reduce((m,w)=>m+w[1],0);
+  V0.push(p);W.push(ws.map(w=>[w[0],w[1]/t]))}
+ for(let j=0;j<N-1;j++)for(let i=0;i<N-1;i++)if(has(i,j)){const a=j*N+i,b=a+1,c=a+N,e=c+1;T.push([a,b,c],[b,e,c])}
+ mesh={V0,W,T};cal=null;off=[0,0]}
+function tri(s0,s1,s2,d0,d1,d2){
+ const x0=s0[0],y0=s0[1],x1=s1[0],y1=s1[1],x2=s2[0],y2=s2[1],det=(x1-x0)*(y2-y0)-(x2-x0)*(y1-y0);if(!det)return;
+ const u1=d1[0]-d0[0],u2=d2[0]-d0[0],v1=d1[1]-d0[1],v2=d2[1]-d0[1];
+ const a=(u1*(y2-y0)-u2*(y1-y0))/det,c=(u2*(x1-x0)-u1*(x2-x0))/det,b=(v1*(y2-y0)-v2*(y1-y0))/det,e=(v2*(x1-x0)-v1*(x2-x0))/det;
+ const cx=(d0[0]+d1[0]+d2[0])/3,cy=(d0[1]+d1[1]+d2[1])/3,g=p=>{const dx=p[0]-cx,dy=p[1]-cy,l=Math.hypot(dx,dy)||1;return[p[0]+dx/l*.7,p[1]+dy/l*.7]};
+ const sx=Math.max(0,Math.min(x0,x1,x2)-1),sy=Math.max(0,Math.min(y0,y1,y2)-1),sw=Math.min(S,Math.max(x0,x1,x2)+1)-sx,sh=Math.min(S,Math.max(y0,y1,y2)+1)-sy;if(sw<=0||sh<=0)return;
+ x.save();x.beginPath();let q=g(d0);x.moveTo(q[0],q[1]);q=g(d1);x.lineTo(q[0],q[1]);q=g(d2);x.lineTo(q[0],q[1]);x.closePath();x.clip();
+ x.transform(a,b,c,e,d0[0]-a*x0-c*y0,d0[1]-b*x0-e*y0);x.drawImage(D,sx,sy,sw,sh,sx,sy,sw,sh);x.restore()}
+const M={nose:0,sL:12,sR:11,eL:14,eR:13,wL:16,wR:15,hL:24,hR:23,kL:26,kR:25,aL:28,aR:27};
+function setDir(n,ang,k=.4){V[n]=[V[n][0]+(Math.cos(ang)-V[n][0])*k,V[n][1]+(Math.sin(ang)-V[n][1])*k]}
+function fromLM(L,w,h){const Q={},ok=k=>L[M[k]].visibility>.3;
+ for(const k in M)Q[k]=[(1-L[M[k]].x)*w,L[M[k]].y*h];Q.nk=mid(Q.sL,Q.sR);Q.hp=mid(Q.hL,Q.hR);
+ for(const[n,a,b]of B){if((a=='nk'||a=='hp'||ok(a))&&(b=='nk'||b=='hp'||ok(b)))setDir(n,Math.atan2(Q[b][1]-Q[a][1],Q[b][0]-Q[a][0]))}
+ if(!cal)cal={hp:Q.hp,s:L0.torso/(Math.hypot(Q.hp[0]-Q.nk[0],Q.hp[1]-Q.nk[1])||1)};
+ off=[(Q.hp[0]-cal.hp[0])*cal.s,(Q.hp[1]-cal.hp[1])*cal.s]}
+function puppet(){const A={};for(const n in V)A[n]=Math.atan2(V[n][1],V[n][0]);
+ const dir=n=>[Math.cos(A[n]),Math.sin(A[n])],hp0=pt(P0,'hp'),nk0=pt(P0,'nk');
+ const hp=add(hp0,off),dt=A.torso-A0.torso,nk=add(hp,dir('torso').map(v=>v*L0.torso));
+ const fk=(s,n)=>add(s,dir(n).map(v=>v*L0[n])),st={torso:hp,head:nk};
+ st.uaL=add(nk,rot(sub(P0.sL,nk0),dt));st.uaR=add(nk,rot(sub(P0.sR,nk0),dt));
+ st.thL=add(hp,rot(sub(P0.hL,hp0),dt));st.thR=add(hp,rot(sub(P0.hR,hp0),dt));
+ st.faL=fk(st.uaL,'uaL');st.faR=fk(st.uaR,'uaR');st.shL=fk(st.thL,'thL');st.shR=fk(st.thR,'thR');
+ const tf=B.map(([n])=>{const t=A[n]-A0[n];return[Math.cos(t),Math.sin(t),R[n].a[0],R[n].a[1],st[n][0],st[n][1]]});
+ const P=mesh.V0.map((p,vi)=>{let X=0,Y=0;for(const[k,w]of mesh.W[vi]){const[c,s,ax,ay,ox,oy]=tf[k],dx=p[0]-ax,dy=p[1]-ay;X+=w*(ox+c*dx-s*dy);Y+=w*(oy+s*dx+c*dy)}return[X,Y]});
+ for(const[a,b,e]of mesh.T)tri(mesh.V0[a],mesh.V0[b],mesh.V0[e],P[a],P[b],P[e])}
+function loop(t){x.clearRect(0,0,S,S);
+ if(stage==2&&mesh){
+  if(tracking&&vid.readyState>1){try{const r=lmk.detectForVideo(vid,performance.now());if(r.landmarks[0])fromLM(r.landmarks[0],vid.videoWidth,vid.videoHeight)}catch(e){}}
+  else if(demo){const s=t/1000;B.forEach(([n],i)=>{if(n!='torso')setDir(n,A0[n]+(n=='head'?.25:.7)*Math.sin(s*2.2+i*.9)*(i%2?1:-1),.5)});off=[0,Math.sin(s*4.4)*8]}
+  puppet()}
+ else{x.drawImage(D,0,0);
+  if(stage==1){x.lineWidth=3;x.strokeStyle='#e2563b';const P=J;
+   for(const[n,a,b]of B){const s=pt(P,a),e=pt(P,b);x.beginPath();x.moveTo(s[0],s[1]);x.lineTo(e[0],e[1]);x.stroke()}
+   x.fillStyle='#fff';for(const k in P){x.beginPath();x.arc(P[k][0],P[k][1],8,0,7);x.fill();x.stroke();x.fillStyle='#2b2622';x.font='10px sans-serif';x.fillText(k,P[k][0]+10,P[k][1]-8);x.fillStyle='#fff'}}}
+ requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+$('up').onclick=()=>$('file').click();
+$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
+ const k=Math.min(S/im.width,S/im.height);U=document.createElement('canvas');U.width=U.height=S;
+ U.getContext('2d').drawImage(im,(S-im.width*k)/2,(S-im.height*k)/2,im.width*k,im.height*k);auto=null;K=null;key=false;$('mode').value='auto';$('pick').style.display='none';$('cutw').style.display='inline-flex';cutout();
+ msg('Photo added. Slide “Paper cutoff” until the paper disappears and only your drawing remains, then tidy up with the eraser.')};im.src=r.result};r.readAsDataURL(f);e.target.value=''};
+$('cut').oninput=cutout;
+function startPick(){if(!U)return;picking=true;d.clearRect(0,0,S,S);d.drawImage(U,0,0);msg('Click the background color in your picture.')}
+function samp(p){const px=U.getContext('2d').getImageData(p[0]|0,p[1]|0,1,1).data;if(!px[3])return;K=[px[0],px[1],px[2]];picking=false;cutout();msg('Color removed. Raise Tolerance for soft or gradient edges, and use the eraser for leftovers.')}
+$('mode').onchange=()=>{key=$('mode').value=='key';$('pick').style.display=key?'':'none';if(key)startPick();else{picking=false;cutout()}};
+$('pick').onclick=startPick;
+function bg(){const col=key&&K?K:auto;c.style.background=stage==2&&$('bgk').checked&&col?'rgb('+col+')':''}
+$('bgk').onchange=bg;
+function cutout(){if(!U)return;const im=U.getContext('2d').getImageData(0,0,S,S),p=im.data,t=+$('cut').value;
+ if(!auto)auto=[0,1,2].map(ch=>{const h=new Uint32Array(256);let n=0;for(let i=0;i<p.length;i+=4)if(p[i+3]){h[p[i+ch]]++;n++}let a=0;for(let v=255;v>=0;v--){a+=h[v];if(a>n*.35)return v}return 255});
+ for(let i=0;i<p.length;i+=4){if(!p[i+3])continue;const q=key&&K?K:auto,dist=key?Math.max(Math.abs(q[0]-p[i]),Math.abs(q[1]-p[i+1]),Math.abs(q[2]-p[i+2])):Math.max(q[0]-p[i],q[1]-p[i+1],q[2]-p[i+2]);p[i+3]=255*Math.max(0,Math.min(1,(dist-t)/(t*.6+1)))}
+ d.clearRect(0,0,S,S);d.putImageData(im,0,0)}
+$('demo').onclick=e=>{demo=!demo;tracking=false;e.target.classList.toggle('on',demo);if(!demo)B.forEach(([n])=>V[n]=[Math.cos(A0[n]),Math.sin(A0[n])])};
+$('cal').onclick=()=>{cal=null};
+$('cam').onclick=async()=>{msg('Starting camera…');
+ try{vid.srcObject=await navigator.mediaDevices.getUserMedia({video:true});await vid.play();vid.style.display='block'}
+ catch(e){msg('Camera blocked. Allow camera access in your browser, or try Demo motion.');return}
+ try{msg('Loading the body-tracking model…');
+  const T=await import('./vendor/vision_bundle.mjs');
+  const fs=await T.FilesetResolver.forVisionTasks('./vendor/wasm');
+  lmk=await T.PoseLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:'./models/pose_landmarker_lite.task'},runningMode:'VIDEO'});
+  demo=false;$('demo').classList.remove('on');tracking=true;cal=null;msg('Step back so your whole body is in view, then move!')}
+ catch(e){msg('The tracking model couldn’t load. Demo motion still works. Try reloading the page.')}};
+</script></body></html>
