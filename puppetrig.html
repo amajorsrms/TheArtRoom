@@ -24,7 +24,7 @@ video{position:absolute;right:8px;bottom:8px;width:110px;border-radius:6px;trans
  <input type="color" id="col" value="#2b2622"><input type="range" id="sz" min="2" max="40" value="8">
  <button id="er">Eraser</button><button id="clr">Clear</button><button id="up">Upload paper drawing</button><input type="file" id="file" accept="image/*" hidden><span id="cutw" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center"><select id="mode"><option value="auto">Remove paper</option><option value="key">Remove a color</option><option value="none">Already transparent</option></select><button id="pick" style="display:none">Pick color</button><label>Tolerance <input type="range" id="cut" min="5" max="120" value="40"></label><label><input type="checkbox" id="bgk"> Keep background color when puppeting</label></span></div>
 <div class="row p" id="p1"><button id="rst">Reset rig</button></div>
-<div class="row p" id="p2"><button id="cam">Start webcam</button><button id="demo">Demo motion</button><button id="cal">Recenter</button></div>
+<div class="row p" id="p2"><button id="cam">Start webcam</button><button id="demo">Demo motion</button><button id="cal">Recenter</button><button id="vtog" style="display:none">Hide webcam</button><button id="bgup">Background image</button><input type="file" id="bgfile" accept="image/*" hidden><label>Color <input type="color" id="bgcol" value="#ffffff"></label><button id="bgclr">Clear background</button></div>
 <div id="msg">Draw a full-body character: head, torso, two arms, two legs. Keep limbs apart so they can move.</div>
 <script>
 const $=id=>document.getElementById(id),c=$('c'),x=c.getContext('2d'),S=560;
@@ -93,7 +93,7 @@ function loop(t){x.clearRect(0,0,S,S);
  if(stage==2&&mesh){
   if(tracking&&vid.readyState>1){try{const r=lmk.detectForVideo(vid,performance.now());if(r.landmarks[0])fromLM(r.landmarks[0],vid.videoWidth,vid.videoHeight)}catch(e){}}
   else if(demo){const s=t/1000;B.forEach(([n],i)=>{if(n!='torso')setDir(n,A0[n]+(n=='head'?.25:.7)*Math.sin(s*2.2+i*.9)*(i%2?1:-1),.5)});off=[0,Math.sin(s*4.4)*8]}
-  puppet()}
+  if(BG)x.drawImage(BG,0,0);puppet()}
  else{x.drawImage(D,0,0);
   if(stage==1){x.lineWidth=3;x.strokeStyle='#e2563b';const P=J;
    for(const[n,a,b]of B){const s=pt(P,a),e=pt(P,b);x.beginPath();x.moveTo(s[0],s[1]);x.lineTo(e[0],e[1]);x.stroke()}
@@ -112,6 +112,13 @@ $('mode').onchange=()=>{key=$('mode').value=='key';none=$('mode').value=='none';
 $('pick').onclick=startPick;
 function bg(){const col=key&&K?K:auto;c.style.background=stage==2&&$('bgk').checked&&col?'rgb('+col+')':''}
 $('bgk').onchange=bg;
+let vh=false,BG=null;
+$('vtog').onclick=e=>{vh=!vh;vid.style.opacity=vh?0:'';e.target.textContent=vh?'Show webcam':'Hide webcam'};
+function setBG(f){BG=document.createElement('canvas');BG.width=BG.height=S;f(BG.getContext('2d'))}
+$('bgcol').oninput=e=>setBG(g=>{g.fillStyle=e.target.value;g.fillRect(0,0,S,S)});
+$('bgup').onclick=()=>$('bgfile').click();
+$('bgfile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.max(S/im.width,S/im.height);setBG(g=>g.drawImage(im,(S-im.width*k)/2,(S-im.height*k)/2,im.width*k,im.height*k))};im.src=r.result};r.readAsDataURL(f);e.target.value=''};
+$('bgclr').onclick=()=>{BG=null};
 function hasAlpha(im){const w=Math.min(im.width,200),h=Math.max(1,Math.round(im.height*w/im.width)),t=document.createElement('canvas');t.width=w;t.height=h;const g=t.getContext('2d');g.drawImage(im,0,0,w,h);const p=g.getImageData(0,0,w,h).data;let n=0;for(let i=3;i<p.length;i+=4)if(p[i]<250)n++;return n>w*h*.02}
 function cutout(){if(!U)return;if(none){d.clearRect(0,0,S,S);d.drawImage(U,0,0);return}const im=U.getContext('2d').getImageData(0,0,S,S),p=im.data,t=+$('cut').value;
  if(!auto)auto=[0,1,2].map(ch=>{const h=new Uint32Array(256);let n=0;for(let i=0;i<p.length;i+=4)if(p[i+3]){h[p[i+ch]]++;n++}let a=0;for(let v=255;v>=0;v--){a+=h[v];if(a>n*.35)return v}return 255});
@@ -120,7 +127,7 @@ function cutout(){if(!U)return;if(none){d.clearRect(0,0,S,S);d.drawImage(U,0,0);
 $('demo').onclick=e=>{demo=!demo;tracking=false;e.target.classList.toggle('on',demo);if(!demo)B.forEach(([n])=>V[n]=[Math.cos(A0[n]),Math.sin(A0[n])])};
 $('cal').onclick=()=>{cal=null};
 $('cam').onclick=async()=>{msg('Starting camera…');
- try{vid.srcObject=await navigator.mediaDevices.getUserMedia({video:true});await vid.play();vid.style.display='block'}
+ try{vid.srcObject=await navigator.mediaDevices.getUserMedia({video:true});await vid.play();vid.style.display='block';$('vtog').style.display=''}
  catch(e){msg('Camera blocked. Allow camera access in your browser, or try Demo motion.');return}
  try{msg('Loading the body-tracking model…');
   for(const u of ['./vendor/vision_bundle.mjs','./vendor/wasm/vision_wasm_internal.wasm','./models/pose_landmarker_lite.task']){const r=await fetch(u,{method:'HEAD'}).catch(()=>null);if(!r||!r.ok)throw new Error('can’t find '+u.slice(2)+(r?' (error '+r.status+')':''))}
