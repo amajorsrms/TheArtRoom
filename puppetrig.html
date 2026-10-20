@@ -72,7 +72,7 @@ function tri(s0,s1,s2,d0,d1,d2){
  const sx=Math.max(0,Math.min(x0,x1,x2)-1),sy=Math.max(0,Math.min(y0,y1,y2)-1),sw=Math.min(S,Math.max(x0,x1,x2)+1)-sx,sh=Math.min(S,Math.max(y0,y1,y2)+1)-sy;if(sw<=0||sh<=0)return;
  x.save();x.beginPath();let q=g(d0);x.moveTo(q[0],q[1]);q=g(d1);x.lineTo(q[0],q[1]);q=g(d2);x.lineTo(q[0],q[1]);x.closePath();x.clip();
  x.transform(a,b,c,e,d0[0]-a*x0-c*y0,d0[1]-b*x0-e*y0);x.drawImage(D,sx,sy,sw,sh,sx,sy,sw,sh);x.restore()}
-const M={nose:0,sL:12,sR:11,eL:14,eR:13,wL:16,wR:15,hL:24,hR:23,kL:26,kR:25,aL:28,aR:27};
+const M={nose:0,sL:11,sR:12,eL:13,eR:14,wL:15,wR:16,hL:23,hR:24,kL:25,kR:26,aL:27,aR:28};
 function setDir(n,ang,k=.4){V[n]=[V[n][0]+(Math.cos(ang)-V[n][0])*k,V[n][1]+(Math.sin(ang)-V[n][1])*k]}
 function fromLM(L,w,h){const Q={},ok=k=>L[M[k]].visibility>.3;
  for(const k in M)Q[k]=[(1-L[M[k]].x)*w,L[M[k]].y*h];Q.nk=mid(Q.sL,Q.sR);Q.hp=mid(Q.hL,Q.hR);
